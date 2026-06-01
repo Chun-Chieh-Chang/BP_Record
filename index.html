@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>血壓 Nexus | 專業 722 紀錄助手</title>
+    <link rel="manifest" href="/assets/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <meta name="theme-color" content="#3B82F6">
+    <style>
+        :root {
+            --bg-base: #F3F4F6;
+            --surface: #FFFFFF;
+            --primary-text: #111827;
+            --secondary-text: #4B5563;
+            --accent: #2563EB;
+            --success: #059669;
+            --danger: #DC2626;
+            --border: #D1D5DB;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-base: #0F172A;
+                --surface: #1E293B;
+                --primary-text: #F1F5F9;
+                --secondary-text: #94A3B8;
+                --accent: #3882F6;
+                --success: #34D399;
+                --danger: #F87171;
+                --border: #334155;
+            }
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--primary-text);
+            margin: 0;
+            padding: 8px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .nexus-container { width: 100%; display: flex; flex-direction: column; }
+        
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 4px 12px; background: var(--surface); border-radius: 8px; margin-bottom: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* 預設手機版：直式堆疊 */
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        /* 桌面版：橫式三欄 */
+        @media (min-width: 1024px) {
+            body { height: 100vh; overflow-y: hidden; }
+            .nexus-container { height: 100%; }
+            .main-layout {
+                display: grid;
+                grid-template-columns: 280px 1fr 340px;
+                height: calc(100vh - 60px);
+                min-height: 0;
+            }
+        }
+
+        .glass-card {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        h2 { font-size: 0.9rem; margin: 0 0 8px 0; color: var(--accent); display: flex; align-items: center; gap: 4px; }
+
+        /* 專家建議區緊湊化 */
+        .expert-advice {
+            background: rgba(37, 99, 235, 0.1);
+            padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .btn {
+            padding: 6px 10px; border-radius: 4px; font-weight: 600; cursor: pointer; border: none; font-size: 0.8rem;
+            display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--primary-text); }
+
+        /* 橫向輸入框 */
+        .input-grid { display: flex; flex-direction: column; gap: 6px; }
+        .input-row { display: grid; grid-template-columns: 25px 1fr 1fr; gap: 6px; align-items: center; }
+        input { background: var(--bg-base); border: 1px solid var(--border); color: var(--primary-text); padding: 6px; border-radius: 4px; width: 100%; font-size: 0.85rem; box-sizing: border-box; }
+        .input-label { font-size: 0.75rem; font-weight: bold; color: var(--secondary-text); }
+
+        .period-selector { display: flex; gap: 4px; margin-bottom: 8px; }
+        .period-btn { flex: 1; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem; cursor: pointer; text-align: center; background: white; }
+        .period-btn.active { border-color: var(--accent); background: rgba(37, 99, 235, 0.1); font-weight: bold; }
+
+        /* 歷史清單滾動 */
+        .scroll-list { flex: 1; overflow-y: auto; padding-right: 2px; }
+        .scroll-list::-webkit-scrollbar { width: 3px; }
+        .scroll-list::-webkit-scrollbar-thumb { background: var(--border); }
+        .history-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--bg-base); font-size: 0.75rem; }
+
+        /* 圖表區域最大化 */
+        .chart-container { flex: 1; position: relative; min-height: 0; }
+
+        .big-val { font-size: 1.4rem; font-weight: 900; }
+        
+        /* 指南區塊樣式 */
+        .guide-content { font-size: 0.75rem; line-height: 1.4; color: var(--secondary-text); }
+        .guide-content h3 { font-size: 0.85rem; margin: 10px 0 5px 0; color: var(--primary-text); }
+        .guide-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.7rem; }
+        .guide-table th, .guide-table td { border: 1px solid var(--border); padding: 4px 6px; text-align: left; }
+        .guide-table th { background: var(--bg-base); }
+        
+        .tools-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
+        
+        .active-filter { background: var(--accent) !important; color: white !important; }
+    </style>
+    <!-- 使用本地備份 -->
+    <script src="/assets/chart.js"></script>
+    <script src="/assets/chartjs-plugin-annotation.js"></script>
+</head>
+<body>
+
+<div class="nexus-container">
+    <header>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <h1 style="margin:0; font-size: 1.1rem; color:var(--accent);">BP <span style="color:var(--primary-text)">Nexus</span></h1>
+            <div id="userDisplay" style="font-size: 0.8rem; font-weight: 800;"></div>
+        </div>
+        <div id="advisorText" style="font-size: 0.8rem; font-weight: 500; color:var(--secondary-text)">Dr. Nexus 準備就緒。</div>
+        <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline" onclick="exportExcel()">Excel</button>
+            <button class="btn btn-outline" onclick="exportJSON()">JSON</button>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <!-- 左：使用者與歷史 -->
+        <div class="glass-card">
+            <h2>👤 使用者</h2>
+            <div style="display: flex; gap: 4px; margin-bottom: 12px;">
+                <input type="text" id="username" placeholder="姓名..." onchange="loadRecords()">
+                <button class="btn btn-primary" onclick="loadRecords()">載入</button>
+            </div>
+            <h2>🕒 紀錄</h2>
+            <div class="scroll-list" id="historyList" style="max-height: 200px; margin-bottom: 8px;"></div>
+            
+            <!-- 知識庫：量測指引 -->
+            <div class="glass-card" style="margin-top: 8px; flex: 1; padding: 10px; overflow-y: auto;">
+                <h2 style="color: var(--success);"><span style="font-size: 1.1rem;">📚</span> 量測知識庫</h2>
+                <div class="guide-content">
+                    <p style="font-weight: bold; color: var(--accent);">起床後 1 小時內與睡前 1 小時內，排尿、靜坐、間隔 1 分鐘，取平均值。</p>
+                    
+                    <h3>1. 為什麼不建議飯後量？</h3>
+                    <ul>
+                        <li><strong>餐後低血壓：</strong>血液流向消化系統，血壓可能暫時下降（長輩尤甚）。</li>
+                        <li><strong>成分干擾：</strong>高鹽、酒精、咖啡因會導致血壓短時間升高。</li>
+                        <li><strong>基礎血壓失效：</strong>飯後波動無法反映長期血管壓力。</li>
+                    </ul>
+
+                    <h3>2. 血壓生理節律</h3>
+                    <ul>
+                        <li><strong>早上 (高峰)：</strong>起床後交感神經活躍，血壓迅速上升（清晨高壓）。建議起床1小時內、排尿後、不吃早餐藥物、靜坐5分鐘後量測。</li>
+                        <li><strong>下午：</strong>受工作勞累影響波動大，參考價值較低。</li>
+                        <li><strong>晚上 (睡前)：</strong>正常應下降10-20%。若未下降（Non-dipper）風險高。建議睡前1小時內量測。</li>
+                    </ul>
+
+                    <h3>3. 722 原則權威時機</h3>
+                    <table class="guide-table">
+                        <tr><th>時段</th><th>具體時機要求</th></tr>
+                        <tr><td>早上</td><td>起床 1h 內/早餐前/藥前/先排尿/靜坐 5min</td></tr>
+                        <tr><td>晚上</td><td>睡前 1h 內/靜坐 5min</td></tr>
+                    </table>
+
+                    <h3>正確量測姿勢</h3>
+                    <ol>
+                        <li><strong>不說話：</strong>不滑手機。</li>
+                        <li><strong>有靠背：</strong>身體不緊繃。</li>
+                        <li><strong>腳放平：</strong>不可翹二郎腿。</li>
+                        <li><strong>同高：</strong>袖帶與心臟等高。</li>
+                        <li><strong>靜坐：</strong>休息 5 分鐘後再開始。</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中：全寬圖表 -->
+        <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h2>📈 健康趨勢</h2>
+                <div class="filter-group" style="display: flex; gap: 4px;">
+                    <button class="btn btn-outline active-filter" data-filter="All" onclick="setFilter('All')">全部</button>
+                    <button class="btn btn-outline" data-filter="Morning" onclick="setFilter('Morning')">早</button>
+                    <button class="btn btn-outline" data-filter="Noon" onclick="setFilter('Noon')">中</button>
+                    <button class="btn btn-outline" data-filter="Night" onclick="setFilter('Night')">晚</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="bpChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 右：輸入與工具 -->
+        <div class="glass-card">
+            <h2>📝 錄入 (三取二)</h2>
+            <div class="expert-advice" id="expertAdvice">請靜坐 5 分鐘後量測。</div>
+            <div class="period-selector">
+                <div class="period-btn active" data-period="Morning" onclick="setPeriod('Morning')">☀️ 早</div>
+                <div class="period-btn" data-period="Noon" onclick="setPeriod('Noon')">🌤️ 中</div>
+                <div class="period-btn" data-period="Night" onclick="setPeriod('Night')">🌙 晚</div>
+            </div>
+            <input type="datetime-local" id="recordTime" style="margin-bottom: 8px;">
+            
+            <div class="input-grid">
+                <div class="input-row"><span class="input-label">1</span><input type="number" id="sys1" placeholder="收縮" oninput="updateUI()"><input type="number" id="dia1" placeholder="舒張" oninput="updateUI()"></div>
+                <div class="input-row"><span class="input-label">2</span><input type="number" id="sys2" placeholder="收縮" oninput="updateUI()"><input type="number" id="dia2" placeholder="舒張" oninput="updateUI()"></div>
+                <div class="input-row"><span class="input-label">3</span><input type="number" id="sys3" placeholder="收縮" oninput="updateUI()"><input type="number" id="dia3" placeholder="舒張" oninput="updateUI()"></div>
+            </div>
+
+            <div id="resultBox" style="background: rgba(5, 150, 105, 0.05); border: 1px solid var(--success);">
+                <div class="big-val" id="currentAvg">-- / --</div>
+                <div id="discardInfo" style="font-size: 0.7rem; color: var(--secondary-text);"></div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="saveRecord()">儲存數據</button>
+
+            <h2 style="margin-top: 12px;">🛠️ 管理</h2>
+            <div class="tools-row">
+                <label class="btn btn-outline" style="cursor:pointer;">匯入 JSON<input type="file" id="importJson" hidden onchange="importJSON(event)"></label>
+                <button class="btn btn-outline" style="color:var(--danger);" onclick="clearAll()">清空數據</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/assets/sw.js');
+    }
+
+    const API_BASE = '/api';
+    let history = [];
+    let chart = null;
+    let currentPeriod = 'Morning';
+    let currentFilter = 'All'; // 新增過濾狀態
+    const periodNames = { Morning: '早上', Noon: '中午', Night: '晚上' };
+
+    function setPeriod(p) {
+        currentPeriod = p;
+        document.querySelectorAll('.period-btn').forEach(el => el.classList.toggle('active', el.dataset.period === p));
+    }
+
+    function setFilter(f) {
+        currentFilter = f;
+        document.querySelectorAll('.filter-group .btn').forEach(btn => {
+            btn.classList.toggle('active-filter', btn.dataset.filter === f);
+        });
+        renderAll(); // 重新渲染列表與圖表
+    }
+
+    function initTime() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('recordTime').value = now.toISOString().slice(0, 16);
+    }
+
+    async function loadRecords() {
+        const user = document.getElementById('username').value;
+        if (!user) return;
+        document.getElementById('userDisplay').innerText = `👤 使用者: ${user}`;
+        const res = await fetch(`${API_BASE}/records/${user}`);
+        history = await res.json();
+        renderAll();
+        analyzeHealth();
+    }
+
+    function calculateLogic(vals) {
+        if (vals.some(v => isNaN(v.sys) || isNaN(v.dia))) return null;
+        let maxSys = -1, discardedIdx = 0;
+        vals.forEach((v, i) => { if (v.sys > maxSys) { maxSys = v.sys; discardedIdx = i; } });
+        const remaining = vals.filter((_, i) => i !== discardedIdx);
+        return { avgSys: Math.round((remaining[0].sys + remaining[1].sys)/2), avgDia: Math.round((remaining[0].dia + remaining[1].dia)/2), discardedIdx };
+    }
+
+    function updateUI() {
+        const vals = [
+            { sys: parseInt(document.getElementById('sys1').value), dia: parseInt(document.getElementById('dia1').value) },
+            { sys: parseInt(document.getElementById('sys2').value), dia: parseInt(document.getElementById('dia2').value) },
+            { sys: parseInt(document.getElementById('sys3').value), dia: parseInt(document.getElementById('dia3').value) }
+        ];
+        const res = calculateLogic(vals);
+        const display = document.getElementById('currentAvg');
+        const discard = document.getElementById('discardInfo');
+        const box = document.getElementById('resultBox');
+
+        if (res) {
+            display.innerText = `${res.avgSys} / ${res.avgDia} mmHg`;
+            discard.innerText = `已排除最高收縮壓: 第 ${res.discardedIdx+1} 次 (${vals[res.discardedIdx].sys})`;
+            const isHigh = res.avgSys >= 135 || res.avgDia >= 85;
+            box.style.background = isHigh ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+            display.style.color = isHigh ? 'var(--danger)' : 'var(--success)';
+        } else {
+            display.innerText = '-- / -- mmHg';
+            discard.innerText = '';
+        }
+    }
+
+    async function saveRecord() {
+        const user = document.getElementById('username').value;
+        if (!user) return alert('請先輸入姓名');
+        const vals = [
+            { sys: parseInt(document.getElementById('sys1').value), dia: parseInt(document.getElementById('dia1').value) },
+            { sys: parseInt(document.getElementById('sys2').value), dia: parseInt(document.getElementById('dia2').value) },
+            { sys: parseInt(document.getElementById('sys3').value), dia: parseInt(document.getElementById('dia3').value) }
+        ];
+        const res = calculateLogic(vals);
+        if (!res) return alert('請完整輸入三次測量值');
+
+        await fetch(`${API_BASE}/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: user, time: document.getElementById('recordTime').value,
+                period: currentPeriod, raw: vals, average: { sys: res.avgSys, dia: res.avgDia },
+                discardedIdx: res.discardedIdx
+            })
+        });
+
+        loadRecords();
+        ['sys1','sys2','sys3','dia1','dia2','dia3'].forEach(id => document.getElementById(id).value = '');
+        updateUI();
+    }
+
+    function analyzeHealth() {
+        const advice = document.getElementById('advisorText');
+        if (history.length === 0) return advice.innerText = "歡迎！開始紀錄您的第一筆血壓數據吧。";
+        const last = history[0];
+        if (last.avg_sys >= 135 || last.avg_dia >= 85) advice.innerText = "警示：最近量測值偏高，建議多休息並諮詢醫師。";
+        else advice.innerText = "目前血壓狀況良好，請繼續保持穩定的紀錄習慣。";
+    }
+
+    function renderAll() {
+        // 套用過濾
+        const filteredData = currentFilter === 'All' ? history : history.filter(r => r.period === currentFilter);
+        
+        const list = document.getElementById('historyList');
+        list.innerHTML = filteredData.slice(0, 15).map(r => `
+            <div class="history-row">
+                <div>
+                    <span style="font-weight:700; color:var(--accent)">[${periodNames[r.period]}]</span>
+                    <span style="font-size:0.8rem; margin-left:5px;">${r.time.slice(5, 10).replace('T', ' ')}</span>
+                </div>
+                <div style="font-weight: 800; color: ${ (r.avg_sys >= 135 || r.avg_dia >= 85) ? 'var(--danger)' : 'var(--success)' }">
+                    ${r.avg_sys} / ${r.avg_dia}
+                </div>
+            </div>
+        `).join('');
+        updateChart(filteredData);
+    }
+
+    function updateChart(dataToShow) {
+        if (typeof Chart === 'undefined' || typeof ChartAnnotation === 'undefined') {
+            if (typeof Chart !== 'undefined' && window['chartjs-plugin-annotation']) {
+                Chart.register(window['chartjs-plugin-annotation']);
+            } else {
+                setTimeout(() => updateChart(dataToShow), 500);
+                return;
+            }
+        }
+        const ctx = document.getElementById('bpChart').getContext('2d');
+        // 按時間正序排列圖表數據
+        const sorted = [...dataToShow].sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-21);
+        
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sorted.map(r => r.time.slice(5, 10) + ' ' + (currentFilter === 'All' ? periodNames[r.period] : '')),
+                datasets: [
+                    { 
+                        label: '收縮壓', 
+                        data: sorted.map(r => r.avg_sys), 
+                        borderColor: 'rgba(59, 130, 246, 0.4)',
+                        borderWidth: 1.5,
+                        borderDash: [5, 5],
+                        tension: 0,
+                        pointStyle: 'circle',
+                        pointRadius: 6,
+                        // 異常點變紅邏輯 (收縮壓 > 135 或 < 90)
+                        pointBackgroundColor: sorted.map(r => (r.avg_sys > 135 || r.avg_sys < 90) ? 'var(--danger)' : '#FFFFFF'),
+                        pointBorderColor: sorted.map(r => (r.avg_sys > 135 || r.avg_sys < 90) ? 'var(--danger)' : '#3B82F6'),
+                        pointBorderWidth: 3,
+                        pointHoverRadius: 8,
+                        z: 10 
+                    },
+                    { 
+                        label: '舒張壓', 
+                        data: sorted.map(r => r.avg_dia), 
+                        borderColor: 'rgba(16, 185, 129, 0.4)',
+                        borderWidth: 1.5,
+                        borderDash: [5, 5],
+                        tension: 0,
+                        pointStyle: 'rectRounded',
+                        pointRadius: 6,
+                        // 異常點變紅邏輯 (舒張壓 > 85 或 < 60)
+                        pointBackgroundColor: sorted.map(r => (r.avg_dia > 85 || r.avg_dia < 60) ? 'var(--danger)' : '#FFFFFF'),
+                        pointBorderColor: sorted.map(r => (r.avg_dia > 85 || r.avg_dia < 60) ? 'var(--danger)' : '#10B981'),
+                        pointBorderWidth: 3,
+                        pointHoverRadius: 8,
+                        z: 10 
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: {
+                    y: { min: 40, max: 200, grid: { display: false } },
+                    x: { grid: { display: false } }
+                },
+                plugins: {
+                    annotation: {
+                        annotations: {
+                            systolicRange: {
+                                type: 'box', yMin: 90, yMax: 135,
+                                backgroundColor: 'rgba(59, 130, 246, 0.08)', borderWidth: 0
+                            },
+                            diastolicRange: {
+                                type: 'box', yMin: 60, yMax: 85,
+                                backgroundColor: 'rgba(16, 185, 129, 0.08)', borderWidth: 0
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function exportExcel() {
+        const user = document.getElementById('username').value;
+        if (!user) return alert('請先識別使用者');
+        window.location.href = `${API_BASE}/export/${user}`;
+    }
+
+    function exportJSON() {
+        const user = document.getElementById('username').value;
+        if (!user) return alert('請先識別使用者');
+        const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `BP_Backup_${user}.json`;
+        a.click();
+    }
+
+    function importJSON(event) {
+        const user = document.getElementById('username').value;
+        if (!user) return alert('請先識別使用者');
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const data = JSON.parse(e.target.result);
+            await fetch(`${API_BASE}/import/${user}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            loadRecords();
+        };
+        reader.readAsText(file);
+    }
+
+    function clearAll() {
+        if (confirm('確定清空數據？')) {
+            alert('功能維護中。');
+        }
+    }
+
+    initTime();
+</script>
+</body>
+</html>
