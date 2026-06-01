@@ -6,166 +6,65 @@
     <title>血壓 Nexus | 專業 722 紀錄助手</title>
     <link rel="manifest" href="/assets/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-    <meta name="theme-color" content="#3B82F6">
-    <style>
-        :root {
-            --bg-base: #F3F4F6;
-            --surface: #FFFFFF;
-            --primary-text: #111827;
-            --secondary-text: #4B5563;
-            --accent: #2563EB;
-            --success: #059669;
-            --danger: #DC2626;
-            --border: #D1D5DB;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-base: #0F172A;
-                --surface: #1E293B;
-                --primary-text: #F1F5F9;
-                --secondary-text: #94A3B8;
-                --accent: #3882F6;
-                --success: #34D399;
-                --danger: #F87171;
-                --border: #334155;
-            }
-        }
-
-        body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            background-color: var(--bg-base);
-            color: var(--primary-text);
-            margin: 0;
-            padding: 8px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        .nexus-container { width: 100%; display: flex; flex-direction: column; }
-        
-        header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 4px 12px; background: var(--surface); border-radius: 8px; margin-bottom: 8px;
-            border: 1px solid var(--border);
-        }
-
-        /* 預設手機版：直式堆疊 */
-        .main-layout {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
-
-        /* 桌面版：橫式三欄 */
-        @media (min-width: 1024px) {
-            body { height: 100vh; overflow-y: hidden; }
-            .nexus-container { height: 100%; }
-            .main-layout {
-                display: grid;
-                grid-template-columns: 280px 1fr 340px;
-                height: calc(100vh - 60px);
-                min-height: 0;
-            }
-        }
-
-        .glass-card {
-            background: var(--surface);
-            border-radius: 10px;
-            padding: 12px;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        h2 { font-size: 0.9rem; margin: 0 0 8px 0; color: var(--accent); display: flex; align-items: center; gap: 4px; }
-
-        /* 專家建議區緊湊化 */
-        .expert-advice {
-            background: rgba(37, 99, 235, 0.1);
-            padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 8px;
-            border-left: 4px solid var(--accent);
-        }
-
-        .btn {
-            padding: 6px 10px; border-radius: 4px; font-weight: 600; cursor: pointer; border: none; font-size: 0.8rem;
-            display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;
-        }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--primary-text); }
-
-        /* 橫向輸入框 */
-        .input-grid { display: flex; flex-direction: column; gap: 6px; }
-        .input-row { display: grid; grid-template-columns: 25px 1fr 1fr; gap: 6px; align-items: center; }
-        input { background: var(--bg-base); border: 1px solid var(--border); color: var(--primary-text); padding: 6px; border-radius: 4px; width: 100%; font-size: 0.85rem; box-sizing: border-box; }
-        .input-label { font-size: 0.75rem; font-weight: bold; color: var(--secondary-text); }
-
-        .period-selector { display: flex; gap: 4px; margin-bottom: 8px; }
-        .period-btn { flex: 1; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem; cursor: pointer; text-align: center; background: white; }
-        .period-btn.active { border-color: var(--accent); background: rgba(37, 99, 235, 0.1); font-weight: bold; }
-
-        /* 歷史清單滾動 */
-        .scroll-list { flex: 1; overflow-y: auto; padding-right: 2px; }
-        .scroll-list::-webkit-scrollbar { width: 3px; }
-        .scroll-list::-webkit-scrollbar-thumb { background: var(--border); }
-        .history-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--bg-base); font-size: 0.75rem; }
-
-        /* 圖表區域最大化 */
-        .chart-container { flex: 1; position: relative; min-height: 0; }
-
-        .big-val { font-size: 1.4rem; font-weight: 900; }
-        
-        /* 指南區塊樣式 */
-        .guide-content { font-size: 0.75rem; line-height: 1.4; color: var(--secondary-text); }
-        .guide-content h3 { font-size: 0.85rem; margin: 10px 0 5px 0; color: var(--primary-text); }
-        .guide-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.7rem; }
-        .guide-table th, .guide-table td { border: 1px solid var(--border); padding: 4px 6px; text-align: left; }
-        .guide-table th { background: var(--bg-base); }
-        
-        .tools-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
-        
-        .active-filter { background: var(--accent) !important; color: white !important; }
-    </style>
+    <meta name="theme-color" content="#3A7CA8">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Link external custom Morandi stylesheet -->
+    <link rel="stylesheet" href="index.css">
+    
     <!-- 使用本地備份 -->
     <script src="/assets/chart.js"></script>
     <script src="/assets/chartjs-plugin-annotation.js"></script>
 </head>
 <body>
 
+<!-- Premium Glassmorphic Background Glows -->
+<div class="glass-bg-container">
+    <div class="glass-bg-blur"></div>
+</div>
+
 <div class="nexus-container">
     <header>
         <div style="display:flex; align-items:center; gap:12px;">
-            <h1 style="margin:0; font-size: 1.1rem; color:var(--accent);">BP <span style="color:var(--primary-text)">Nexus</span></h1>
-            <div id="userDisplay" style="font-size: 0.8rem; font-weight: 800;"></div>
+            <h1 style="margin:0; font-size: 1.3rem; font-family: 'Outfit', sans-serif; font-weight: 700; color:var(--color-accent-blue); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-heart-pulse"></i> BP <span style="color:var(--color-text-primary); font-weight: 300;">Nexus</span>
+            </h1>
+            <div id="userDisplay" style="font-size: 0.85rem; font-weight: 800; color: var(--color-text-primary); background: rgba(58, 124, 168, 0.08); padding: 4px 10px; border-radius: 20px;"></div>
         </div>
-        <div id="advisorText" style="font-size: 0.8rem; font-weight: 500; color:var(--secondary-text)">Dr. Nexus 準備就緒。</div>
+        <div id="advisorText" style="font-size: 0.85rem; font-weight: 500; color:var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-user-doctor" style="color: var(--color-accent-blue);"></i> Dr. Nexus 準備就緒。
+        </div>
         <div style="display:flex; gap:8px;">
-            <button class="btn btn-outline" onclick="exportExcel()">Excel</button>
-            <button class="btn btn-outline" onclick="exportJSON()">JSON</button>
+            <button class="btn btn-outline" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Excel 匯出</button>
+            <button class="btn btn-outline" onclick="exportJSON()"><i class="fa-solid fa-file-code"></i> JSON 備份</button>
         </div>
     </header>
 
     <div class="main-layout">
         <!-- 左：使用者與歷史 -->
         <div class="glass-card">
-            <h2>👤 使用者</h2>
-            <div style="display: flex; gap: 4px; margin-bottom: 12px;">
-                <input type="text" id="username" placeholder="姓名..." onchange="loadRecords()">
-                <button class="btn btn-primary" onclick="loadRecords()">載入</button>
+            <h2><i class="fa-solid fa-user-circle"></i> 使用者</h2>
+            <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                <input type="text" id="username" placeholder="請輸入姓名..." onchange="loadRecords()">
+                <button class="btn btn-primary" onclick="loadRecords()"><i class="fa-solid fa-magnifying-glass"></i> 載入</button>
             </div>
-            <h2>🕒 紀錄</h2>
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> 歷史紀錄</h2>
             <div class="scroll-list" id="historyList" style="max-height: 200px; margin-bottom: 8px;"></div>
             
             <!-- 知識庫：量測指引 -->
-            <div class="glass-card" style="margin-top: 8px; flex: 1; padding: 10px; overflow-y: auto;">
-                <h2 style="color: var(--success);"><span style="font-size: 1.1rem;">📚</span> 量測知識庫</h2>
+            <div class="glass-card" style="margin-top: 8px; flex: 1; padding: 12px; overflow-y: auto;">
+                <h2 style="color: var(--color-success);"><i class="fa-solid fa-book-medical"></i> 量測知識庫</h2>
                 <div class="guide-content">
-                    <p style="font-weight: bold; color: var(--accent);">起床後 1 小時內與睡前 1 小時內，排尿、靜坐、間隔 1 分鐘，取平均值。</p>
+                    <p style="font-weight: 700; color: var(--color-accent-blue); background: rgba(58, 124, 168, 0.05); padding: 8px; border-radius: 6px; border-left: 3px solid var(--color-accent-sky); margin-bottom: 10px;">
+                        起床後 1 小時內與睡前 1 小時內，排尿、靜坐、間隔 1 分鐘，取平均值。
+                    </p>
                     
                     <h3>1. 為什麼不建議飯後量？</h3>
                     <ul>
@@ -183,9 +82,13 @@
 
                     <h3>3. 722 原則權威時機</h3>
                     <table class="guide-table">
-                        <tr><th>時段</th><th>具體時機要求</th></tr>
-                        <tr><td>早上</td><td>起床 1h 內/早餐前/藥前/先排尿/靜坐 5min</td></tr>
-                        <tr><td>晚上</td><td>睡前 1h 內/靜坐 5min</td></tr>
+                        <thead>
+                            <tr><th>時段</th><th>具體時機要求</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>早上</td><td>起床 1h 內/早餐前/藥前/先排尿/靜坐 5min</td></tr>
+                            <tr><td>晚上</td><td>睡前 1h 內/靜坐 5min</td></tr>
+                        </tbody>
                     </table>
 
                     <h3>正確量測姿勢</h3>
@@ -203,7 +106,7 @@
         <!-- 中：全寬圖表 -->
         <div class="glass-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h2>📈 健康趨勢</h2>
+                <h2><i class="fa-solid fa-chart-line"></i> 健康趨勢</h2>
                 <div class="filter-group" style="display: flex; gap: 4px;">
                     <button class="btn btn-outline active-filter" data-filter="All" onclick="setFilter('All')">全部</button>
                     <button class="btn btn-outline" data-filter="Morning" onclick="setFilter('Morning')">早</button>
@@ -218,19 +121,36 @@
 
         <!-- 右：輸入與工具 -->
         <div class="glass-card">
-            <h2>📝 錄入 (三取二)</h2>
-            <div class="expert-advice" id="expertAdvice">請靜坐 5 分鐘後量測。</div>
+            <h2><i class="fa-solid fa-pen-to-square"></i> 錄入 (三取二)</h2>
+            <div class="expert-advice" id="expertAdvice"><i class="fa-solid fa-circle-info"></i> 請靜坐 5 分鐘後量測。</div>
             <div class="period-selector">
                 <div class="period-btn active" data-period="Morning" onclick="setPeriod('Morning')">☀️ 早</div>
                 <div class="period-btn" data-period="Noon" onclick="setPeriod('Noon')">🌤️ 中</div>
                 <div class="period-btn" data-period="Night" onclick="setPeriod('Night')">🌙 晚</div>
             </div>
-            <input type="datetime-local" id="recordTime" style="margin-bottom: 8px;">
+            <input type="datetime-local" id="recordTime" style="margin-bottom: 10px;">
             
             <div class="input-grid">
-                <div class="input-row"><span class="input-label">1</span><input type="number" id="sys1" placeholder="收縮" oninput="updateUI()"><input type="number" id="dia1" placeholder="舒張" oninput="updateUI()"></div>
-                <div class="input-row"><span class="input-label">2</span><input type="number" id="sys2" placeholder="收縮" oninput="updateUI()"><input type="number" id="dia2" placeholder="舒張" oninput="updateUI()"></div>
-                <div class="input-row"><span class="input-label">3</span><input type="number" id="sys3" placeholder="收縮" oninput="updateUI()"><input type="number" id="dia3" placeholder="舒張" oninput="updateUI()"></div>
+                <div class="input-row"><span class="input-label">1</span><input type="number" id="sys1" placeholder="收縮壓" oninput="updateUI()"><input type="number" id="dia1" placeholder="舒張壓" oninput="updateUI()"></div>
+                <div class="input-row"><span class="input-label">2</span><input type="number" id="sys2" placeholder="收縮壓" oninput="updateUI()"><input type="number" id="dia2" placeholder="舒張壓" oninput="updateUI()"></div>
+                <div class="input-row"><span class="input-label">3</span><input type="number" id="sys3" placeholder="收縮壓" oninput="updateUI()"><input type="number" id="dia3" placeholder="舒張壓" oninput="updateUI()"></div>
+            </div>
+
+            <div id="resultBox" style="background: rgba(16, 185, 129, 0.05); border: 1px solid var(--color-success); margin: 12px 0;">
+                <div class="big-val" id="currentAvg">-- / --</div>
+                <div id="discardInfo" style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 4px;"></div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="saveRecord()"><i class="fa-solid fa-floppy-disk"></i> 儲存數據</button>
+
+            <h2 style="margin-top: 16px;"><i class="fa-solid fa-gears"></i> 系統管理</h2>
+            <div class="tools-row">
+                <label class="btn btn-outline" style="cursor:pointer;"><i class="fa-solid fa-file-import"></i> 匯入 JSON<input type="file" id="importJson" hidden onchange="importJSON(event)"></label>
+                <button class="btn btn-outline" style="color:var(--color-warning);" onclick="clearAll()"><i class="fa-solid fa-trash-can"></i> 清空數據</button>
+            </div>
+        </div>
+    </div>
+</div>收縮" oninput="updateUI()"><input type="number" id="dia3" placeholder="舒張" oninput="updateUI()"></div>
             </div>
 
             <div id="resultBox" style="background: rgba(5, 150, 105, 0.05); border: 1px solid var(--success);">
@@ -314,7 +234,7 @@
             discard.innerText = `已排除最高收縮壓: 第 ${res.discardedIdx+1} 次 (${vals[res.discardedIdx].sys})`;
             const isHigh = res.avgSys >= 135 || res.avgDia >= 85;
             box.style.background = isHigh ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)';
-            display.style.color = isHigh ? 'var(--danger)' : 'var(--success)';
+            display.style.color = isHigh ? 'var(--color-warning)' : 'var(--color-success)';
         } else {
             display.innerText = '-- / -- mmHg';
             discard.innerText = '';
@@ -351,8 +271,8 @@
         const advice = document.getElementById('advisorText');
         if (history.length === 0) return advice.innerText = "歡迎！開始紀錄您的第一筆血壓數據吧。";
         const last = history[0];
-        if (last.avg_sys >= 135 || last.avg_dia >= 85) advice.innerText = "警示：最近量測值偏高，建議多休息並諮詢醫師。";
-        else advice.innerText = "目前血壓狀況良好，請繼續保持穩定的紀錄習慣。";
+        if (last.avg_sys >= 135 || last.avg_dia >= 85) advice.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: var(--color-warning);"></i> 警示：最近量測值偏高，建議多休息並諮詢醫師。';
+        else advice.innerHTML = '<i class="fa-solid fa-circle-check" style="color: var(--color-success);"></i> 目前血壓狀況良好，請繼續保持穩定的紀錄習慣。';
     }
 
     function renderAll() {
@@ -363,10 +283,10 @@
         list.innerHTML = filteredData.slice(0, 15).map(r => `
             <div class="history-row">
                 <div>
-                    <span style="font-weight:700; color:var(--accent)">[${periodNames[r.period]}]</span>
+                    <span style="font-weight:700; color:var(--color-accent-blue)">[${periodNames[r.period]}]</span>
                     <span style="font-size:0.8rem; margin-left:5px;">${r.time.slice(5, 10).replace('T', ' ')}</span>
                 </div>
-                <div style="font-weight: 800; color: ${ (r.avg_sys >= 135 || r.avg_dia >= 85) ? 'var(--danger)' : 'var(--success)' }">
+                <div style="font-weight: 800; color: ${ (r.avg_sys >= 135 || r.avg_dia >= 85) ? 'var(--color-warning)' : 'var(--color-success)' }">
                     ${r.avg_sys} / ${r.avg_dia}
                 </div>
             </div>
@@ -396,15 +316,15 @@
                     { 
                         label: '收縮壓', 
                         data: sorted.map(r => r.avg_sys), 
-                        borderColor: 'rgba(59, 130, 246, 0.4)',
+                        borderColor: 'rgba(58, 124, 168, 0.4)',
                         borderWidth: 1.5,
                         borderDash: [5, 5],
                         tension: 0,
                         pointStyle: 'circle',
                         pointRadius: 6,
                         // 異常點變紅邏輯 (收縮壓 > 135 或 < 90)
-                        pointBackgroundColor: sorted.map(r => (r.avg_sys > 135 || r.avg_sys < 90) ? 'var(--danger)' : '#FFFFFF'),
-                        pointBorderColor: sorted.map(r => (r.avg_sys > 135 || r.avg_sys < 90) ? 'var(--danger)' : '#3B82F6'),
+                        pointBackgroundColor: sorted.map(r => (r.avg_sys > 135 || r.avg_sys < 90) ? 'var(--color-warning)' : '#FFFFFF'),
+                        pointBorderColor: sorted.map(r => (r.avg_sys > 135 || r.avg_sys < 90) ? 'var(--color-warning)' : 'var(--color-accent-blue)'),
                         pointBorderWidth: 3,
                         pointHoverRadius: 8,
                         z: 10 
@@ -419,8 +339,8 @@
                         pointStyle: 'rectRounded',
                         pointRadius: 6,
                         // 異常點變紅邏輯 (舒張壓 > 85 或 < 60)
-                        pointBackgroundColor: sorted.map(r => (r.avg_dia > 85 || r.avg_dia < 60) ? 'var(--danger)' : '#FFFFFF'),
-                        pointBorderColor: sorted.map(r => (r.avg_dia > 85 || r.avg_dia < 60) ? 'var(--danger)' : '#10B981'),
+                        pointBackgroundColor: sorted.map(r => (r.avg_dia > 85 || r.avg_dia < 60) ? 'var(--color-warning)' : '#FFFFFF'),
+                        pointBorderColor: sorted.map(r => (r.avg_dia > 85 || r.avg_dia < 60) ? 'var(--color-warning)' : 'var(--color-success)'),
                         pointBorderWidth: 3,
                         pointHoverRadius: 8,
                         z: 10 
@@ -439,7 +359,7 @@
                         annotations: {
                             systolicRange: {
                                 type: 'box', yMin: 90, yMax: 135,
-                                backgroundColor: 'rgba(59, 130, 246, 0.08)', borderWidth: 0
+                                backgroundColor: 'rgba(58, 124, 168, 0.08)', borderWidth: 0
                             },
                             diastolicRange: {
                                 type: 'box', yMin: 60, yMax: 85,
