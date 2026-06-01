@@ -226,11 +226,33 @@
     }
 
     function calculateLogic(vals) {
-        if (vals.some(v => isNaN(v.sys) || isNaN(v.dia))) return null;
-        let maxSys = -1, discardedIdx = 0;
-        vals.forEach((v, i) => { if (v.sys > maxSys) { maxSys = v.sys; discardedIdx = i; } });
-        const remaining = vals.filter((_, i) => i !== discardedIdx);
-        return { avgSys: Math.round((remaining[0].sys + remaining[1].sys)/2), avgDia: Math.round((remaining[0].dia + remaining[1].dia)/2), discardedIdx };
+        // 過濾出有有效數值的項目
+        const validVals = vals.filter(v => !isNaN(v.sys) && !isNaN(v.dia));
+        if (validVals.length === 0) return null;
+
+        let avgSys, avgDia, discardedIdx = -1;
+
+        if (validVals.length === 3) {
+            // 嚴格三取二：排除收縮壓最高的一筆
+            let maxSys = -1;
+            validVals.forEach((v, i) => {
+                if (v.sys > maxSys) {
+                    maxSys = v.sys;
+                    discardedIdx = i;
+                }
+            });
+            const remaining = validVals.filter((_, i) => i !== discardedIdx);
+            avgSys = Math.round((remaining[0].sys + remaining[1].sys) / 2);
+            avgDia = Math.round((remaining[0].dia + remaining[1].dia) / 2);
+        } else {
+            // 只有 1 或 2 筆數據：直接取平均，不排除任何值
+            const sumSys = validVals.reduce((sum, v) => sum + v.sys, 0);
+            const sumDia = validVals.reduce((sum, v) => sum + v.dia, 0);
+            avgSys = Math.round(sumSys / validVals.length);
+            avgDia = Math.round(sumDia / validVals.length);
+        }
+
+        return { avgSys, avgDia, discardedIdx, count: validVals.length };
     }
 
     function updateUI() {
@@ -246,13 +268,18 @@
 
         if (res) {
             display.innerText = `${res.avgSys} / ${res.avgDia} mmHg`;
-            discard.innerText = `已排除最高收縮壓: 第 ${res.discardedIdx+1} 次 (${vals[res.discardedIdx].sys})`;
+            if (res.count === 3) {
+                discard.innerText = `已執行三取二，排除第 ${res.discardedIdx + 1} 次最高壓`;
+            } else {
+                discard.innerText = `目前輸入 ${res.count} 筆數據 (建議量滿 3 次以利自動去偏)`;
+            }
             const isHigh = res.avgSys >= 135 || res.avgDia >= 85;
             box.style.background = isHigh ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)';
             display.style.color = isHigh ? 'var(--color-warning)' : 'var(--color-success)';
         } else {
             display.innerText = '-- / -- mmHg';
             discard.innerText = '';
+            box.style.background = 'rgba(16, 185, 129, 0.05)';
         }
     }
 
@@ -265,13 +292,13 @@
             { sys: parseInt(document.getElementById('sys3').value), dia: parseInt(document.getElementById('dia3').value) }
         ];
         const res = calculateLogic(vals);
-        if (!res) return alert('請完整輸入三次測量值');
+        if (!res) return alert('請至少輸入一筆完整的量測值');
 
         const record = {
             username: user,
             time: document.getElementById('recordTime').value,
             period: currentPeriod,
-            raw: vals,
+            raw: vals.filter(v => !isNaN(v.sys) && !isNaN(v.dia)), // 只儲存有效數值
             average: { sys: res.avgSys, dia: res.avgDia },
             discardedIdx: res.discardedIdx,
             avg_sys: res.avgSys,
