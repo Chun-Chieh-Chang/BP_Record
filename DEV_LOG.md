@@ -61,4 +61,25 @@
 - [x] 新的視覺風格在極端尺寸（手機/桌面）下是否跑通且無破損？（是）
 - [x] 所有互動功能（載入、錄入、過濾、圖表渲染、匯出）是否皆正常運作無 Regression？（是）
 
+## [2026-06-01] GitHub Pages 部署與 Serverless 智慧儲存降級實作
+
+### 🎯 Plan
+- 解決 GitHub Pages 無法執行 Node.js/SQLite 後端的問題。
+- 設計雙模儲存方案，讓靜態部署版自動降級至 `localStorage`，確保 100% 離線可用。
+- 引入 SheetJS，在前端直接生成並導出 Excel。
+- 建立原生免外掛 GitHub Actions 部署工作流 `.github/workflows/deploy.yml`。
+
+### 🚀 Do
+- 建立 `.github/workflows/deploy.yml`，自動構建並上傳 Pages 靜態成品。
+- 重構 `index.html`：
+  - 引入 SheetJS CDN (`xlsx.full.min.js`)。
+  - 設計 `apiRequest` 封裝，當偵測到 `github.io` 或無連接埠時，主動拋出錯誤以觸發 `catch`。
+  - 將 `loadRecords`、`saveRecord`、`importJSON` 與 `clearAll` 改進為 `try...catch` 結構，在服務端不可用時無縫對接 `localStorage`。
+  - 在前端以 SheetJS 實作瀏覽器端 Excel 表格生成與下載邏輯。
+
+### 🔍 Check
+- [x] 本地模擬 Serverless（停用後端時）雙模切換與 `localStorage` 讀寫？（是，完全功能齊全）
+- [x] 瀏覽器端 Excel 生成與匯出格式？（是，符合 Morandi 欄位規格）
+- [x] Pages 部署工作流配置？（是，已就緒）
+
 
