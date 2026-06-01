@@ -4,8 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>血壓 Nexus | 專業 722 紀錄助手</title>
-    <link rel="manifest" href="/assets/manifest.json">
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <script>
+        // 徹底解決 file:// 協議下的 CORS 與 ServiceWorker 錯誤
+        const isLocalFile = window.location.protocol === 'file:';
+        if (!isLocalFile) {
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = 'assets/manifest.json';
+            document.head.appendChild(link);
+        }
+    </script>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <meta name="theme-color" content="#3A7CA8">
     
     <!-- Google Fonts -->
@@ -23,8 +32,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <!-- 使用本地備份 -->
-    <script src="/assets/chart.js"></script>
-    <script src="/assets/chartjs-plugin-annotation.js"></script>
+    <script src="assets/chart.js"></script>
+    <script src="assets/chartjs-plugin-annotation.js"></script>
 </head>
 <body>
 
@@ -35,16 +44,18 @@
 
 <div class="nexus-container">
     <header>
-        <div style="display:flex; align-items:center; gap:12px;">
+        <div class="header-left">
             <h1 style="margin:0; font-size: 1.3rem; font-family: 'Outfit', sans-serif; font-weight: 700; color:var(--color-accent-blue); display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-heart-pulse"></i> BP <span style="color:var(--color-text-primary); font-weight: 300;">Nexus</span>
             </h1>
             <div id="userDisplay" style="font-size: 0.85rem; font-weight: 800; color: var(--color-text-primary); background: rgba(58, 124, 168, 0.08); padding: 4px 10px; border-radius: 20px;"></div>
         </div>
-        <div id="advisorText" style="font-size: 0.85rem; font-weight: 500; color:var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-user-doctor" style="color: var(--color-accent-blue);"></i> Dr. Nexus 準備就緒。
+        <div class="header-center">
+            <div id="advisorText">
+                <i class="fa-solid fa-user-doctor" style="color: var(--color-accent-blue);"></i> Dr. Nexus 準備就緒。
+            </div>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div class="header-right">
             <button class="btn btn-outline" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Excel 匯出</button>
             <button class="btn btn-outline" onclick="exportJSON()"><i class="fa-solid fa-file-code"></i> JSON 備份</button>
         </div>
@@ -54,7 +65,7 @@
         <!-- 左：使用者與歷史 -->
         <div class="glass-card">
             <h2><i class="fa-solid fa-user-circle"></i> 使用者</h2>
-            <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+            <div class="user-search-group">
                 <input type="text" id="username" placeholder="請輸入姓名..." onchange="loadRecords()">
                 <button class="btn btn-primary" onclick="loadRecords()"><i class="fa-solid fa-magnifying-glass"></i> 載入</button>
             </div>
@@ -153,28 +164,11 @@
             </div>
         </div>
     </div>
-</div>收縮" oninput="updateUI()"><input type="number" id="dia3" placeholder="舒張" oninput="updateUI()"></div>
-            </div>
-
-            <div id="resultBox" style="background: rgba(5, 150, 105, 0.05); border: 1px solid var(--success);">
-                <div class="big-val" id="currentAvg">-- / --</div>
-                <div id="discardInfo" style="font-size: 0.7rem; color: var(--secondary-text);"></div>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="saveRecord()">儲存數據</button>
-
-            <h2 style="margin-top: 12px;">🛠️ 管理</h2>
-            <div class="tools-row">
-                <label class="btn btn-outline" style="cursor:pointer;">匯入 JSON<input type="file" id="importJson" hidden onchange="importJSON(event)"></label>
-                <button class="btn btn-outline" style="color:var(--danger);" onclick="clearAll()">清空數據</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/assets/sw.js');
+    if ('serviceWorker' in navigator && !isLocalFile) {
+        navigator.serviceWorker.register('assets/sw.js');
     }
 
     const API_BASE = '/api';

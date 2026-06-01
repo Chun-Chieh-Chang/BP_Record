@@ -82,4 +82,41 @@
 - [x] 瀏覽器端 Excel 生成與匯出格式？（是，符合 Morandi 欄位規格）
 - [x] Pages 部署工作流配置？（是，已就緒）
 
+## [2026-06-01] UI 渲染異常修復：冗餘損壞代碼清理 (Mojibake Fix)
+
+### 🎯 Plan
+- 診斷並修復使用者回報的「收縮欄位出現亂碼」與 UI 區塊重複問題。
+- 掃描 `index.html` 尋找導致 HTML 結構破裂的字串與標籤。
+
+### 🚀 Do
+- 定位到 `index.html` 第 160 行左右存在一段損壞的 HTML 碎片：`</div>收縮" oninput="updateUI()"><input type="number" id="dia3" placeholder="舒張" oninput="updateUI()"></div>`。
+- 該碎片與其後方的重複「管理」區塊（使用舊版樣式與變數如 `var(--danger)`）皆為先前重構時遺留的殘骸，導致頁面在 `nexus-container` 關閉後又渲染了破碎內容。
+- 執行外科手術式清理，刪除 line 160 至 line 178 的冗餘損壞區塊。
+
+### 🔍 Check
+- [x] 頁面底部是否仍有重複的「管理」按鈕？（否，已移除）
+- [x] 頁面上是否仍可見到原始 HTML 代碼字串？（否，已修復）
+- [x] 主體 `nexus-container` 結構是否完整閉合？（是，維持 3 層 `</div>` 結構）
+
+## [2026-06-01] UI/UX 深度優化：佈局穩定性與響應式補強
+
+### 🎯 Plan
+- 解決 Header 元素重疊與文字垂直斷裂問題。
+- 優化使用者識別欄位的寬度配比，防止按鈕文字擠壓。
+- 強化「協議感知載入」 (Protocol-Aware Loading) 以徹底消除 `file://` 下的控制台報錯。
+
+### 🚀 Do
+- **Header 重構**：引入 `.header-left`, `.header-center`, `.header-right` 三段式佈局，並對 Logo 與按鈕區塊套用 `flex-shrink: 0` 防止變形。
+- **文字保護**：為 `advisorText` 套用 `white-space: nowrap` 與省略號處理，確保在大螢幕下的橫向穩定性；針對手機版開啟 `white-space: normal` 以適應窄螢幕。
+- **欄位優化**：新增 `.user-search-group`，使用 `flex: 1` 讓輸入框填滿剩餘空間，並對「載入」按鈕實施不換行保護。
+- **代碼清理**：修復了 `index.html` 中 `isLocalFile` 重複定義導致的 `SyntaxError`。
+
+### 🔍 Check
+- [x] 控制台 (Console) 在 `file://` 與 `http://` 下是否皆無紅字錯誤？（是）
+- [x] 手機版佈局是否自動堆疊且易於操作？（是，已實作 Media Queries 補強）
+- [x] 標誌、提示文與按鈕是否仍有重疊現象？（否，已完全隔離）
+
+### ⚡ Act
+- 本日開發目標達成。專案已進入穩定運行狀態，代碼結構符合 MECE 原則，文件同步完成。準備執行還原基準點 (Git Commit) 並推送至遠端。
+
 
