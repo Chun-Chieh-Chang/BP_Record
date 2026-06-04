@@ -31,7 +31,7 @@
 - 確認本地端與遠端分支同步狀態。
 
 ### 🚀 Do
-- 執行 `git remote show origin` 與 `git branch -r` 診斷，確認遠端為空倉庫（沒有任何分支）。
+- 執行 `git remote show origin` 與 `git branch -r` 診斷，確認遠端為空倉庫（沒有 any branch）。
 - 執行 `git push --dry-run origin main` 驗證連線與權限。
 - 獲得使用者授權後，成功執行 `git push -u origin main` 將本地 `main` 分支推送到遠端。
 
@@ -82,6 +82,68 @@
 - [x] 瀏覽器端 Excel 生成與匯出格式？（是，符合 Morandi 欄位規格）
 - [x] Pages 部署工作流配置？（是，已就緒）
 
+## [2026-06-01] UI 渲染異常修復：冗餘損壞代碼清理 (Mojibake Fix)
+
+### 🎯 Plan
+- 診斷並修復使用者回報的「收縮欄位出現亂碼」與 UI 區塊重複問題。
+- 掃描 `index.html` 尋找導致 HTML 結構破裂的字串與標籤。
+
+### 🚀 Do
+- 定位到 `index.html` 第 160 行左右存在一段損壞的 HTML 碎片：`</div>收縮" oninput="updateUI()"><input type="number" id="dia3" placeholder="舒張" oninput="updateUI()"></div>`。
+- 該碎片與其後方的重複「管理」區塊（使用舊版樣式與變數如 `var(--danger)`）皆為先前重構時遺留的殘骸，導致頁面在 `nexus-container` 關閉後又渲染了破碎內容。
+- 執行外科手術式清理，刪除 line 160 至 line 178 的冗餘損壞區塊。
+
+### 🔍 Check
+- [x] 頁面底部是否仍有重複的「管理」按鈕？（否，已移除）
+- [x] 頁面上是否仍可見到原始 HTML 代碼字串？（否，已修復）
+- [x] 主體 `nexus-container` 結構是否完整閉合？（是，維持 3 層 `</div>` 結構）
+
+## [2026-06-01] UI/UX 深度優化：佈局穩定性與響應式補強
+
+### 🎯 Plan
+- 解決 Header 元素重疊與文字垂直斷裂問題。
+- 優化使用者識別欄位的寬度配比，防止按鈕文字擠壓。
+- 強化「協議感知載入」 (Protocol-Aware Loading) 以徹底消除 `file://` 下的控制台報錯。
+
+### 🚀 Do
+- **Header 重構**：引入 `.header-left`, `.header-center`, `.header-right` 三段式佈局，並對 Logo 與按鈕區塊套用 `flex-shrink: 0` 防止變形。
+- **文字保護**：為 `advisorText` 套用 `white-space: nowrap` 與省略號處理，確保在大螢幕下的橫向穩定性；針對手機版開啟 `white-space: normal` 以適應窄螢幕。
+- **欄位優化**：新增 `.user-search-group`，使用 `flex: 1` 讓輸入框填滿剩餘空間，並對「載入」按鈕實施不換行保護。
+- **代碼清理**：修復了 `index.html` 中 `isLocalFile` 重複定義導致的 `SyntaxError`。
+
+### 🔍 Check
+- [x] 控制台 (Console) 在 `file://` 與 `http://` 下是否皆無紅字錯誤？（是）
+- [x] 手機版佈局是否自動堆疊且易於操作？（是，已實作 Media Queries 補強）
+- [x] 標誌、提示文與按鈕是否仍有重疊現象？（否，已完全隔離）
+
+### ⚡ Act
+- 本日開發目標達成。專案已進入穩定運行狀態，代碼結構符合 MECE 原則，文件同步完成。準備執行還原基準點 (Git Commit) 並推送至遠端。
+
+## [2026-06-01] 算法鲁棒性優化：動態降級計算邏輯 (Dynamic Fallback)
+
+### 🎯 Plan
+- 解決「三取二」算法過於嚴格的問題（原先強制量滿 3 次才允許計算與儲存）。
+- 優化算法使其支持 1、2 或 3 次量測，提升使用者操作靈活性。
+
+### 🚀 Do
+- **重構 `calculateLogic`**：
+  - 當輸入 3 次時，維持「三取二」排除最高收縮壓邏輯。
+  - 當輸入 1 或 2 次時，自動切換為「平均值模式」，不再執行排除。
+- **UI 智慧回饋**：
+  - 動態顯示當前量測次數，並在非滿額量測時給予「建議量滿 3 次」的專業引導。
+  - 優化結果顯示區背景，在不同狀態下（正常/警示/空值）正確切換色彩。
+- **數據驗證補強**：
+  - 儲存時自動過濾無效欄位，僅紀錄實際輸入的數據。
+  - 修改 `saveRecord` 阻攔邏輯，只要有 1 筆完整數據即可儲存。
+
+### 🔍 Check
+- [x] 量 1 次、2 次、3 次時，UI 提示是否準確？（是）
+- [x] 數據儲存後，歷史列表與圖表是否能正確處理非滿額量測？（是）
+- [x] 是否存在計算錯誤？（否，已針對 `validVals.length` 進行除數檢查）
+
+### ⚡ Act
+- 此優化大幅提升了系統的實用性。專案代碼已進行最後整理，準備推送。
+
 ## [2026-06-04] SkillsBuilder 開發模式：Y軸自適應縮放、UI血壓標準展示與超標紅點高亮
 
 ### 🎯 Plan
@@ -91,7 +153,7 @@
 - 補完並修復 `server.js` 缺失的 SQLite API 接口（查詢、寫入、Excel 流式導出），使系統能在 Server Mode 下完整且魯棒地運行。
 
 ### 🚀 Do
-- 實作 `server.js` 中缺失 the SQLite 存儲 API，補齊 `GET /api/records/:username`、`POST /api/records` 及 `GET /api/export/:username` 端點，以支援 SQLite 後端持久化。
+- 實作 `server.js` 中缺失的 SQLite 存儲 API，補齊 `GET /api/records/:username`、`POST /api/records` 及 `GET /api/export/:username` 端點，以支援 SQLite 後端持久化。
 - 更新 `index.html`，整合血壓標準對照（正常、前期、超標）至圖表頂部與錄入面板。
 - 將 Chart.js Y 軸修改為 `suggestedMin: 50` 與 `suggestedMax: 150` 自適應配置。
 - 修改數據點顏色條件為 `avg_sys >= 135` / `avg_dia >= 85`，並使用 JS 十六進位顏色常數（`#EF4444`）解決 Chart.js 無法解析 CSS 變數導至點變黑的 Canvas 渲染問題。
