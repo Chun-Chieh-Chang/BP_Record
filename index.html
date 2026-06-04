@@ -384,6 +384,24 @@
         // 按時間正序排列圖表數據
         const sorted = [...dataToShow].sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-21);
         
+        // 依據點的密度與螢幕寬度自適應調整點的大小與框線，避免密集時重疊擁擠
+        const pointCount = sorted.length;
+        const isMobile = window.innerWidth < 768;
+        
+        let radius = isMobile ? 4.5 : 6;
+        let hoverRadius = isMobile ? 6.5 : 8;
+        let borderWidth = isMobile ? 2.2 : 3;
+
+        if (pointCount > 14) {
+            radius = isMobile ? 2.5 : 3.5;
+            hoverRadius = isMobile ? 4.5 : 5.5;
+            borderWidth = isMobile ? 1.2 : 1.8;
+        } else if (pointCount > 7) {
+            radius = isMobile ? 3.5 : 4.8;
+            hoverRadius = isMobile ? 5.5 : 6.8;
+            borderWidth = isMobile ? 1.8 : 2.5;
+        }
+
         // 定義 JS 顏色常數以利 Canvas 渲染 (避免 CSS var() 解析失敗)
         const COLOR_ACCENT_BLUE = '#3A7CA8';
         const COLOR_SUCCESS = '#10B981';
@@ -403,12 +421,12 @@
                         borderDash: [5, 5],
                         tension: 0,
                         pointStyle: 'circle',
-                        pointRadius: 6,
+                        pointRadius: radius,
                         // 超標點變紅邏輯 (收縮壓 >= 135)
                         pointBackgroundColor: sorted.map(r => (r.avg_sys >= 135) ? COLOR_WARNING : '#FFFFFF'),
                         pointBorderColor: sorted.map(r => (r.avg_sys >= 135) ? COLOR_WARNING : COLOR_ACCENT_BLUE),
-                        pointBorderWidth: 3,
-                        pointHoverRadius: 8,
+                        pointBorderWidth: borderWidth,
+                        pointHoverRadius: hoverRadius,
                         z: 10 
                     },
                     { 
@@ -419,12 +437,12 @@
                         borderDash: [5, 5],
                         tension: 0,
                         pointStyle: 'rectRounded',
-                        pointRadius: 6,
+                        pointRadius: radius,
                         // 超標點變紅邏輯 (舒張壓 >= 85)
                         pointBackgroundColor: sorted.map(r => (r.avg_dia >= 85) ? COLOR_WARNING : '#FFFFFF'),
                         pointBorderColor: sorted.map(r => (r.avg_dia >= 85) ? COLOR_WARNING : COLOR_SUCCESS),
-                        pointBorderWidth: 3,
-                        pointHoverRadius: 8,
+                        pointBorderWidth: borderWidth,
+                        pointHoverRadius: hoverRadius,
                         z: 10 
                     }
                 ]
