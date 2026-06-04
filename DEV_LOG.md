@@ -82,4 +82,25 @@
 - [x] 瀏覽器端 Excel 生成與匯出格式？（是，符合 Morandi 欄位規格）
 - [x] Pages 部署工作流配置？（是，已就緒）
 
+## [2026-06-04] SkillsBuilder 開發模式：Y軸自適應縮放、UI血壓標準展示與超標紅點高亮
 
+### 🎯 Plan
+- 調整圖表 Y 軸為自適應縮放，利用 Chart.js 的 `suggestedMin` (50) 與 `suggestedMax` (150) 特性，既確保無越界裁切又避免極端窄距波動。
+- 在「健康趨勢」圖表上方及「數據錄入」面板中加入血壓標準對照（正常 < 130/80, 前期 130-134/80-84, 超標 ≥ 135/85 mmHg）。
+- 修正 Chart.js 中數據點超標高亮的邊界條件，精準對齊台灣高血壓指引的 135 (SYS) 與 85 (DIA) 臨界值，將超標數據點呈現紅色。
+- 補完並修復 `server.js` 缺失的 SQLite API 接口（查詢、寫入、Excel 流式導出），使系統能在 Server Mode 下完整且魯棒地運行。
+
+### 🚀 Do
+- 實作 `server.js` 中缺失 the SQLite 存儲 API，補齊 `GET /api/records/:username`、`POST /api/records` 及 `GET /api/export/:username` 端點，以支援 SQLite 後端持久化。
+- 更新 `index.html`，整合血壓標準對照（正常、前期、超標）至圖表頂部與錄入面板。
+- 將 Chart.js Y 軸修改為 `suggestedMin: 50` 與 `suggestedMax: 150` 自適應配置。
+- 修改數據點顏色條件為 `avg_sys >= 135` / `avg_dia >= 85`，並使用 JS 十六進位顏色常數（`#EF4444`）解決 Chart.js 無法解析 CSS 變數導至點變黑的 Canvas 渲染問題。
+
+### 🔍 Check
+- [x] 多使用者載入與資料庫儲存是否正常？（是，數據能成功存入 SQLite database 并顯示）
+- [x] 圖表 Y 軸自適應是否符合預期？（是，在正常值下維持 50-150，在 171 的高血壓點輸入後自適應調整為 50-200）
+- [x] 超標點紅點標示是否正常？（是，收縮壓 ≥ 135、舒張壓 ≥ 85 點皆正常高亮為紅色 #EF4444，一般數據點則維持藍/綠色）
+- [x] Excel 匯出功能是否能在 Server Mode 下順暢運作？（是，點擊後觸發後端下載流）
+
+### ⚡ Act
+- 維持程式碼的高可讀性與強健性，並確保 Serverless / Server Mode 雙模無縫降級的完整運作。

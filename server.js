@@ -43,7 +43,95 @@ db.serialize(() => {
     )`);
 });
 
-// ... (中間 API 保持不變)
+// API: 取得特定使用者的所有紀錄
+app.get('/api/records/:username', (req, res) => {
+    const username = req.params.username;
+    db.all(`SELECT * FROM records WHERE username = ? ORDER BY time DESC`, [username], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const records = rows.map(r => ({
+            id: r.id,
+            username: r.username,
+            time: r.time,
+            period: r.period,
+            raw: [
+                { sys: r.sys1, dia: r.dia1 },
+                { sys: r.sys2, dia: r.dia2 },
+                { sys: r.sys3, dia: r.dia3 }
+            ],
+            average: { sys: r.avg_sys, dia: r.avg_dia },
+            avg_sys: r.avg_sys,
+            avg_dia: r.avg_dia,
+            discardedIdx: r.discarded_idx
+        }));
+        res.json(records);
+    });
+});
+
+// API: 新增/更新一筆量測紀錄
+app.post('/api/records', (req, res) => {
+    const r = req.body;
+    if (!r.username || !r.time || !r.period || !r.raw || !r.average) {
+        return res.status(400).json({ error: '無效的資料格式' });
+    }
+    db.run(
+        `INSERT OR REPLACE INTO records (username, time, period, sys1, dia1, sys2, dia2, sys3, dia3, avg_sys, avg_dia, discarded_idx)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+            r.username,
+            r.time,
+            r.period,
+            r.raw[0]?.sys || null,
+            r.raw[0]?.dia || null,
+            r.raw[1]?.sys || null,
+            r.raw[1]?.dia || null,
+            r.raw[2]?.sys || null,
+            r.raw[2]?.dia || null,
+            r.avg_sys || r.average.sys,
+            r.avg_dia || r.average.dia,
+            r.discardedIdx !== undefined ? r.discardedIdx : r.discarded_idx
+        ],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: '儲存成功' });
+        }
+    );
+});
+
+// API: 匯出 Excel
+app.get('/api/export/:username', (req, res) => {
+    const username = req.params.username;
+    db.all(`SELECT * FROM records WHERE username = ? ORDER BY time DESC`, [username], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (rows.length === 0) return res.status(404).send('尚無任何歷史紀錄可供匯出');
+
+        const excelData = rows.map((r, i) => {
+            return {
+                '項次': rows.length - i,
+                '量測時間': r.time.replace('T', ' '),
+                '時段': r.period === 'Morning' ? '早上' : r.period === 'Noon' ? '中午' : '晚上',
+                '第一次收縮壓': r.sys1 || '',
+                '第一次舒張壓': r.dia1 || '',
+                '第二次收縮壓': r.sys2 || '',
+                '第二次舒張壓': r.dia2 || '',
+                '第三次收縮壓': r.sys3 || '',
+                '第三次舒張壓': r.dia3 || '',
+                '排除量測序號': (r.discarded_idx || 0) + 1,
+                '平均收縮壓': r.avg_sys || '',
+                '平均舒張壓': r.avg_dia || ''
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "血壓紀錄表");
+
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        res.setHeader('Content-Disposition', `attachment; filename="BP_Report_${encodeURIComponent(username)}.xlsx"`);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.send(buffer);
+    });
+});
+
 
 // API: 匯入 JSON (智慧合併，自動去重)
 app.post('/api/import/:username', (req, res) => {

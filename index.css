@@ -379,3 +379,11 @@ input:focus {
     border: none !important;
     box-shadow: 0 4px 12px rgba(58, 124, 168, 0.2);
 }
+
+/* --- CHART STYLES --- */
+.chart-container {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    width: 100%;
+}
