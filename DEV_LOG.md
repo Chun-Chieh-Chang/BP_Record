@@ -144,6 +144,30 @@
 ### ⚡ Act
 - 此優化大幅提升了系統的實用性。專案代碼已進行最後整理，準備推送。
 
+## [2026-06-11] 功能增強：新增個別紀錄刪除功能與重複數據診斷
+
+### 🎯 Plan
+- 解決使用者回報的「重複紀錄無法刪除」問題。
+- 在 UI 歷史列表增加單筆紀錄刪除按鈕。
+- 在後端實作 DELETE API。
+- 確保 Serverless (localStorage) 模式下也能正常刪除。
+
+### 🚀 Do
+- **後端 (server.js)**：新增 `DELETE /api/records/:id` 接口。
+- **前端 (index.html)**：
+  - 實作 `deleteRecord` 函式，支援 API 與 localStorage 雙模。
+  - 重構 `renderAll`，在每筆紀錄前加入 FontAwesome 垃圾桶圖示。
+- **樣式 (index.css)**：新增 `.btn-delete` 樣式，採用懸停顯現 (Hover-reveal) 策略保持介面純淨。
+
+### 🔍 Check
+- [x] 點擊刪除按鈕是否彈出確認視窗？ (是)
+- [x] SQLite 資料庫中的數據是否成功移除？ (是)
+- [x] localStorage 模式下的過濾邏輯是否正確？ (是)
+- [x] UI 列表與圖表在刪除後是否立即更新？ (是)
+
+### ⚡ Act
+- 此功能補齊了數據管理的關鍵環節，使用者現在可以自行清理誤輸入或重複的數據。
+
 ## [2026-06-04] SkillsBuilder 開發模式：Y軸自適應縮放、UI血壓標準展示與超標紅點高亮
 
 ### 🎯 Plan

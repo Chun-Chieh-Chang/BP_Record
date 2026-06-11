@@ -352,6 +352,30 @@
         else advice.innerHTML = '<i class="fa-solid fa-circle-check" style="color: var(--color-success);"></i> 目前血壓狀況良好，請繼續保持穩定的紀錄習慣。';
     }
 
+    async function deleteRecord(id, time, period) {
+        if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+        const user = document.getElementById('username').value;
+        try {
+            if (id) {
+                await apiRequest(`${API_BASE}/records/${id}`, { method: 'DELETE' });
+            } else {
+                throw new Error('No ID for backend delete, trying local fallback');
+            }
+            await loadRecords();
+        } catch (err) {
+            console.warn('Backend delete failed, using local storage fallback:', err.message);
+            const localData = localStorage.getItem(`BP_${user}`);
+            if (localData) {
+                let localHistory = JSON.parse(localData);
+                localHistory = localHistory.filter(r => !(r.time === time && r.period === period));
+                localStorage.setItem(`BP_${user}`, JSON.stringify(localHistory));
+                history = localHistory;
+                renderAll();
+                analyzeHealth();
+            }
+        }
+    }
+
     function renderAll() {
         // 套用過濾
         const filteredData = currentFilter === 'All' ? history : history.filter(r => r.period === currentFilter);
@@ -359,9 +383,14 @@
         const list = document.getElementById('historyList');
         list.innerHTML = filteredData.slice(0, 15).map(r => `
             <div class="history-row">
-                <div>
-                    <span style="font-weight:700; color:var(--color-accent-blue)">[${periodNames[r.period]}]</span>
-                    <span style="font-size:0.8rem; margin-left:5px;">${r.time.slice(5, 10).replace('T', ' ')}</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="btn-delete" onclick="deleteRecord(${r.id || 'null'}, '${r.time}', '${r.period}')" title="刪除">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                    <div>
+                        <span style="font-weight:700; color:var(--color-accent-blue)">[${periodNames[r.period]}]</span>
+                        <span style="font-size:0.8rem; margin-left:5px;">${r.time.slice(5, 10).replace('T', ' ')}</span>
+                    </div>
                 </div>
                 <div style="font-weight: 800; color: ${ (r.avg_sys >= 135 || r.avg_dia >= 85) ? 'var(--color-warning)' : 'var(--color-success)' }">
                     ${r.avg_sys} / ${r.avg_dia}

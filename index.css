@@ -364,6 +364,30 @@ input:focus {
     background-color: rgba(58, 124, 168, 0.04);
 }
 
+.btn-delete {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    opacity: 0.3;
+}
+
+.history-row:hover .btn-delete {
+    opacity: 1;
+}
+
+.btn-delete:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-warning);
+}
+
 /* --- RESULTS BOX --- */
 #resultBox {
     border-radius: var(--radius-sm);
