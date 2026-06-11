@@ -134,28 +134,42 @@ app.get('/api/export/:username', (req, res) => {
 
 
 // API: 匯入 JSON (智慧合併，自動去重)
-app.post('/api/import/:username', (req, res) => {
+app.post('/api/import/:username', async (req, res) => {
     const username = req.params.username;
     const records = req.body;
     if (!Array.isArray(records)) return res.status(400).json({ error: '無效的資料格式' });
 
-    let importedCount = 0;
-    db.serialize(() => {
-        // 使用 INSERT OR IGNORE 確保重複數據 (時間+姓名+時段相同) 會被自動跳過
-        const stmt = db.prepare(`INSERT OR IGNORE INTO records (username, time, period, sys1, dia1, sys2, dia2, sys3, dia3, avg_sys, avg_dia, discarded_idx) 
-                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-        
-        records.forEach(r => {
-            const raw = r.raw || [{sys:r.sys1, dia:r.dia1}, {sys:r.sys2, dia:r.dia2}, {sys:r.sys3, dia:r.dia3}];
-            const avg = r.average || {sys:r.avg_sys, dia:r.avg_dia};
-            stmt.run(username, r.time, r.period, raw[0].sys, raw[0].dia, raw[1].sys, raw[1].dia, raw[2].sys, raw[2].dia, avg.sys, avg.dia, r.discardedIdx || r.discarded_idx);
-        });
-
-        stmt.finalize((err) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: '智慧匯入完成，重複紀錄已自動過濾。' });
+    const runQuery = (query, params) => new Promise((resolve, reject) => {
+        db.run(query, params, function(err) {
+            if (err) reject(err);
+            else resolve(this);
         });
     });
+
+    try {
+        for (const r of records) {
+            const raw = r.raw || [{sys:r.sys1, dia:r.dia1}, {sys:r.sys2, dia:r.dia2}, {sys:r.sys3, dia:r.dia3}];
+            const avg = r.average || {sys:r.avg_sys, dia:r.avg_dia};
+            await runQuery(
+                `INSERT OR IGNORE INTO records (username, time, period, sys1, dia1, sys2, dia2, sys3, dia3, avg_sys, avg_dia, discarded_idx) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    username, 
+                    r.time, 
+                    r.period, 
+                    raw[0]?.sys || null, raw[0]?.dia || null, 
+                    raw[1]?.sys || null, raw[1]?.dia || null, 
+                    raw[2]?.sys || null, raw[2]?.dia || null, 
+                    avg.sys, 
+                    avg.dia, 
+                    r.discardedIdx !== undefined ? r.discardedIdx : r.discarded_idx
+                ]
+            );
+        }
+        res.json({ message: '智慧匯入完成，重複紀錄已自動過濾。' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // API: 刪除紀錄

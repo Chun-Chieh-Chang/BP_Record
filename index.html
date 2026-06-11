@@ -555,43 +555,52 @@
         const user = document.getElementById('username').value;
         if (!user) return alert('請先識別使用者');
         const file = event.target.files[0];
+        if (!file) return;
+
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const data = JSON.parse(e.target.result);
             try {
-                await apiRequest(`${API_BASE}/import/${user}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                await loadRecords();
-            } catch (err) {
-                console.warn('Backend import failed, using local storage fallback:', err.message);
-                const localData = localStorage.getItem(`BP_${user}`);
-                let localHistory = localData ? JSON.parse(localData) : [];
-                data.forEach(r => {
-                    const exists = localHistory.some(lh => lh.time === r.time && lh.period === r.period);
-                    if (!exists) {
-                        const raw = r.raw || [{sys:r.sys1, dia:r.dia1}, {sys:r.sys2, dia:r.dia2}, {sys:r.sys3, dia:r.dia3}];
-                        const avg = r.average || {sys:r.avg_sys, dia:r.avg_dia};
-                        localHistory.push({
-                            username: user,
-                            time: r.time,
-                            period: r.period,
-                            raw: raw,
-                            average: avg,
-                            avg_sys: avg.sys,
-                            avg_dia: avg.dia,
-                            discardedIdx: r.discardedIdx !== undefined ? r.discardedIdx : r.discarded_idx
-                        });
-                    }
-                });
-                localHistory.sort((a, b) => new Date(b.time) - new Date(a.time));
-                localStorage.setItem(`BP_${user}`, JSON.stringify(localHistory));
-                history = localHistory;
-                renderAll();
-                analyzeHealth();
-                alert('智慧匯入完成，重複紀錄已自動過濾（儲存於本地）。');
+                const data = JSON.parse(e.target.result);
+                try {
+                    const res = await apiRequest(`${API_BASE}/import/${user}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+                    await loadRecords();
+                    alert(result.message || '匯入完成');
+                } catch (err) {
+                    console.warn('Backend import failed, using local storage fallback:', err.message);
+                    const localData = localStorage.getItem(`BP_${user}`);
+                    let localHistory = localData ? JSON.parse(localData) : [];
+                    data.forEach(r => {
+                        const exists = localHistory.some(lh => lh.time === r.time && lh.period === r.period);
+                        if (!exists) {
+                            const raw = r.raw || [{sys:r.sys1, dia:r.dia1}, {sys:r.sys2, dia:r.dia2}, {sys:r.sys3, dia:r.dia3}];
+                            const avg = r.average || {sys:r.avg_sys, dia:r.avg_dia};
+                            localHistory.push({
+                                username: user,
+                                time: r.time,
+                                period: r.period,
+                                raw: raw,
+                                average: avg,
+                                avg_sys: avg.sys,
+                                avg_dia: avg.dia,
+                                discardedIdx: r.discardedIdx !== undefined ? r.discardedIdx : r.discarded_idx
+                            });
+                        }
+                    });
+                    localHistory.sort((a, b) => new Date(b.time) - new Date(a.time));
+                    localStorage.setItem(`BP_${user}`, JSON.stringify(localHistory));
+                    history = localHistory;
+                    renderAll();
+                    analyzeHealth();
+                    alert('智慧匯入完成，重複紀錄已自動過濾（儲存於本地）。');
+                }
+            } catch (parseErr) {
+                alert('JSON 解析失敗，請確認檔案格式是否正確。');
+                console.error(parseErr);
             }
         };
         reader.readAsText(file);
