@@ -1,11 +1,11 @@
-const CACHE_NAME = 'bp-nexus-v3';
+const CACHE_NAME = 'bp-nexus-v4';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/chart.js',
-  '/chartjs-plugin-annotation.js',
-  '/favicon.svg',
-  '/manifest.json'
+  '/assets/chart.js',
+  '/assets/chartjs-plugin-annotation.js',
+  '/assets/favicon.svg',
+  '/assets/manifest.json'
 ];
 
 // 安裝階段：強制跳過等待，立即啟用新版本
