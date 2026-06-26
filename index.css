@@ -147,6 +147,9 @@ header {
         white-space: normal;
         justify-content: center;
     }
+    .chart-container {
+        min-height: 300px;
+    }
 }
 
 /* --- LAYOUT & PANELS --- */
