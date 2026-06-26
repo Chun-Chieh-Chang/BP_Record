@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bp-nexus-v4';
+const CACHE_NAME = 'bp-nexus-v5';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,12 +8,19 @@ const urlsToCache = [
   '/assets/manifest.json'
 ];
 
-// 安裝階段：強制跳過等待，立即啟用新版本
+// 安裝階段：逐個快取，失敗時忽略不中斷
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache);
+      return Promise.all(
+        urlsToCache.map(url =>
+          fetch(url).then(response => {
+            if (!response.ok) console.warn('SW: cache miss for', url);
+            return cache.put(url, response);
+          }).catch(() => console.warn('SW: failed to cache', url))
+        )
+      );
     })
   );
 });
