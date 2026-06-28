@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bp-nexus-v9';
+const CACHE_NAME = 'bp-nexus-v10';
 const urlsToCache = [
   '/',
   '/index.html',
