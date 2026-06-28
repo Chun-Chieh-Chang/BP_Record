@@ -147,10 +147,6 @@ header {
         white-space: normal;
         justify-content: center;
     }
-    .chart-container {
-        height: 640px;
-        flex: none;
-    }
 }
 
 /* --- LAYOUT & PANELS --- */
@@ -482,4 +478,11 @@ input:focus {
     min-height: 0;
     position: relative;
     width: 100%;
+}
+
+@media (max-width: 1023px) {
+    .chart-container {
+        height: 640px;
+        flex: none;
+    }
 }

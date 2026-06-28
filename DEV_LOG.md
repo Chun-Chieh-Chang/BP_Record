@@ -226,11 +226,21 @@
 
 ### 🚀 Do
 - **樣式調整 (`index.css`)**：
-  - 將 `@media (max-width: 768px)` 媒體查詢中的 `.chart-container` 高度修改為 `640px`。
+  - 將通用 `.chart-container` 樣式置於媒體查詢上方，並在最底部新增 `@media (max-width: 1023px)` 的 `.chart-container { height: 640px; flex: none; }` 覆蓋樣式，確保能覆寫預設的 `flex: 1` 佈局。
 - **圖表設定 (`index.html`)**：
   - 更新 Chart.js 配置中的 `options.scales.x` 和 `options.scales.y` 屬性，加入 `ticks.font` 設定，並指定 `size` 為 `14`。
 
 ### 🔍 Check
 - [x] 軸刻度字體是否更清晰易讀？（是，14px 字體比預設小字體更利於在手機螢幕上快速判讀）
-- [x] Y 軸數據點是否具有良好的視覺間隔？（是，高度拉長至 640px 後，點與線的垂直位移辨識度極其顯著）
+- [x] Y 軸數據點是否具有良好的視覺間隔？（是，修正 CSS 覆蓋順序後，高度順利拉長至 640px，點與線的垂直位移辨識度極其顯著）
+
+### ⚠️ 過程遇到問題與分析 (RCA & CAPA)
+- **問題：手機版高度修改無效，僅字體大小改變**
+  - **失敗嘗試**：直接在 `index.css` 的 `@media (max-width: 768px)` 中設置高度。
+  - **原因分析 (RCA)**：
+    1. 在原 CSS 結構中，通用的 `.chart-container { flex: 1; ... }` 被宣告於 `index.css` 的最底部（約 480 行），而手機版媒體查詢 `@media (max-width: 768px)` 位於檔案中部（約 131 行）。
+    2. 由於兩者選擇器權重相同（皆為單個 class 選擇器），根據 CSS 層疊順序，宣告於後方的通用樣式會覆蓋前方的媒體查詢樣式，導致 `flex: 1` 覆寫了手機版的 `flex: none`，且因 Flexbox 未指定父高度而導致 `640px` 高度失效。
+  - **矯正與預防措施 (CAPA)**：
+    1. 重構 `index.css` 宣告順序，將所有媒體查詢（Media Queries）等響應式覆寫樣式統一移至檔案最底部宣告。
+    2. 將手機與平板的覆蓋範圍擴大至 `@media (max-width: 1023px)`，確保在各種寬度低於桌機的行動裝置上皆能正確套用 640px 高度。
 
