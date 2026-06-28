@@ -482,7 +482,7 @@ input:focus {
 
 @media (max-width: 1023px) {
     .chart-container {
-        height: 640px;
+        height: 450px;
         flex: none;
     }
 }

@@ -222,23 +222,25 @@
 ### 🎯 Plan
 - 在遠端分支已完成手機端圖表高度拉長與 Y 軸自適應區間範圍 (60-150) 的基礎上，進一步優化手機端圖表的標籤易讀性與高度，提高數據點的辨識度。
 - 將 X 軸與 Y 軸刻度字體大小調整為 14px，提升在移動端顯示時的數字清晰度。
-- 測試將手機端圖表容器高度調整為 640px，觀察拉長後的辨識度改善。
+- 測試手機端圖表容器高度，從 320px（太短）調整為 640px（過長）後，最終收斂微調至 **`450px`**，取得辨識度與版面佔用的最佳平衡。
 
 ### 🚀 Do
 - **樣式調整 (`index.css`)**：
-  - 將通用 `.chart-container` 樣式置於媒體查詢上方，並在最底部新增 `@media (max-width: 1023px)` 的 `.chart-container { height: 640px; flex: none; }` 覆蓋樣式，確保能覆寫預設的 `flex: 1` 佈局。
+  - 將通用 `.chart-container` 樣式置於媒體查詢上方，並在最底部新增 `@media (max-width: 1023px)` 的 `.chart-container { height: 450px; flex: none; }` 覆蓋樣式。
 - **圖表設定 (`index.html`)**：
   - 更新 Chart.js 配置中的 `options.scales.x` 和 `options.scales.y` 屬性，加入 `ticks.font` 設定，並指定 `size` 為 `14`。
+- **快取更新 (`assets/sw.js`)**：
+  - 將 Service Worker 的快取版本升級為 `bp-nexus-v7`，強制行動端瀏覽器即時套用 450px 高度。
 
 ### 🔍 Check
-- [x] 軸刻度字體是否更清晰易讀？（是，14px 字體比預設小字體更利於在手機螢幕上快速判讀）
-- [x] Y 軸數據點是否具有良好的視覺間隔？（是，修正 CSS 覆蓋順序後，高度順利拉長至 640px，點與線的垂直位移辨識度極其顯著）
+- [x] 軸刻度字體是否更清晰易讀？（是，14px 字體非常利於快速判讀）
+- [x] Y 軸數據點是否具有良好的視覺間隔？（是，拉長至 450px 後，點與線的垂直波動清晰可辨，且不至於過度拉伸，視覺效果最為理想）
 
 ### ⚠️ 過程遇到問題與分析 (RCA & CAPA)
 - **問題 1：手機版高度修改無效，僅字體大小改變**
   - **原因分析 (RCA)**：通用 `.chart-container { flex: 1; ... }` 被宣告於 `index.css` 底部，因 CSS 宣告順序後者優先規則，覆蓋了檔案中部媒體查詢中的 `flex: none`。這導致 Flexbox 沒有獲得高度參照，高度修改失效。
   - **矯正與預防措施 (CAPA)**：將響應式媒體查詢覆寫規則移至 `index.css` 的最底部，並將覆蓋範圍擴大至 `@media (max-width: 1023px)` 以包含所有手機與平板裝置。
 - **問題 2：手機端因 Service Worker 快取，看不到最新高度，僅 HTML 的字體大小變大**
-  - **原因分析 (RCA)**：原 `sw.js` 的 `urlsToCache` 陣列中漏掉了 `index.css`，且由於快取版本號 (`bp-nexus-v5`) 未更新，手機端瀏覽器一直加載舊版的快取 CSS 檔案；而 HTML 檔案本身是採取網路優先策略，因此使用者能看到 JavaScript 中的字型大小更新，但 CSS 高度仍為舊版高度。
-  - **矯正與預防措施 (CAPA)**：將 `sw.js` 的快取版本號更新為 `bp-nexus-v6`，強制瀏覽器更新快取，並將 `/index.css` 列入 `urlsToCache` 快取清單。
+  - **原因分析 (RCA)**：原 `sw.js` 的 `urlsToCache` 陣列中漏掉了 `index.css`，且由於快取版本號 (`bp-nexus-v5`) 未更新，手機端瀏覽器一直加載舊版的快取 CSS 檔案。
+  - **矯正與預防措施 (CAPA)**：將 `sw.js` 的快取版本號更新為 `bp-nexus-v7`，強制瀏覽器更新快取，並將 `/index.css` 列入 `urlsToCache` 快取清單。
 
