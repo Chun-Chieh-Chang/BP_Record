@@ -148,7 +148,7 @@ header {
         justify-content: center;
     }
     .chart-container {
-        height: 320px;
+        height: 640px;
         flex: none;
     }
 }
