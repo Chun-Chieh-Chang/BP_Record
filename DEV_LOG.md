@@ -243,4 +243,11 @@
 - **問題 2：手機端因 Service Worker 快取，看不到最新高度，僅 HTML 的字體大小變大**
   - **原因分析 (RCA)**：原 `sw.js` 的 `urlsToCache` 陣列中漏掉了 `index.css`，且由於快取版本號 (`bp-nexus-v5`) 未更新，手機端瀏覽器一直加載舊版的快取 CSS 檔案。
   - **矯正與預防措施 (CAPA)**：將 `sw.js` 的快取版本號更新為 `bp-nexus-v7`，強制瀏覽器更新快取，並將 `/index.css` 列入 `urlsToCache` 快取清單。
+- **問題 3：手機版加入主畫面 (PWA) 後啟動，會出現 GitHub Pages 404 錯誤**
+  - **原因分析 (RCA)**：
+    1. 在 `manifest.json` 中配置的 `"start_url"` 為 `"/"`（根目錄）。
+    2. 當應用部署在 GitHub Pages（路徑為 `https://Chun-Chieh-Chang.github.io/BP_Record/`）時，根目錄 `"/"` 會指向 `https://Chun-Chieh-Chang.github.io/`，而該根路徑並不存在任何網頁，因而被 GitHub Pages 攔截並回傳 404 錯誤。
+  - **矯正與預防措施 (CAPA)**：
+    1. 將 `manifest.json` 中的 `"start_url"` 修改為相對路徑 `"../index.html"`。因為 manifest.json 位於 `assets/` 目錄，相對路徑 `"../index.html"` 在 GitHub Pages 與 localhost 環境下皆能精確指向應用的根目錄。
+    2. 將 `sw.js` 快取版本號更新為 `bp-nexus-v8`，促使手機端更新 PWA 設定檔。
 
