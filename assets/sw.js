@@ -1,7 +1,8 @@
-const CACHE_NAME = 'bp-nexus-v5';
+const CACHE_NAME = 'bp-nexus-v6';
 const urlsToCache = [
   '/',
   '/index.html',
+  '/index.css',
   '/assets/chart.js',
   '/assets/chartjs-plugin-annotation.js',
   '/assets/favicon.svg',
