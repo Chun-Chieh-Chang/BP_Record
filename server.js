@@ -182,6 +182,35 @@ app.delete('/api/records/:id', (req, res) => {
     });
 });
 
+// API: 修訂紀錄
+app.put('/api/records/:id', (req, res) => {
+    const id = req.params.id;
+    const r = req.body;
+    if (!r.time || !r.period || !r.raw || !r.average) {
+        return res.status(400).json({ error: '無效的資料格式' });
+    }
+    db.run(
+        `UPDATE records SET time = ?, period = ?, sys1 = ?, dia1 = ?, sys2 = ?, dia2 = ?, sys3 = ?, dia3 = ?, avg_sys = ?, avg_dia = ?, discarded_idx = ? WHERE id = ?`,
+        [
+            r.time,
+            r.period,
+            r.raw[0]?.sys || null, r.raw[0]?.dia || null,
+            r.raw[1]?.sys || null, r.raw[1]?.dia || null,
+            r.raw[2]?.sys || null, r.raw[2]?.dia || null,
+            r.avg_sys || r.average.sys,
+            r.avg_dia || r.average.dia,
+            r.discardedIdx !== undefined ? r.discardedIdx : (r.discarded_idx !== undefined ? r.discarded_idx : null),
+            id
+        ],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            if (this.changes === 0) return res.status(404).json({ error: '找不到該筆紀錄' });
+            res.json({ message: '更新成功' });
+        }
+    );
+});
+
+
 app.listen(port, () => {
 
     console.log(`Server running at http://localhost:${port}`);

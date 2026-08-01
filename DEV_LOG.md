@@ -1,5 +1,76 @@
 # Development Log (PDCA)
 
+## [2026-08-01] 功能增強：新增紀錄時間區間動態篩選 (Time Range Filter Feature)
+
+### 🎯 Plan
+- 新增靈活的歷史血壓紀錄「時間區間篩選」功能（全部時間、最近1個月、最近3個月、最近半年、最近1年）。
+- 支援「時間區間」與「時段 (早/中/晚)」雙重條件交集動態篩選。
+- 即時連動更新歷史列表、無紀錄狀態顯示與 Chart.js 圖表趨勢。
+
+### 🚀 Do
+- **前端介面 (`index.html` & `index.css`)**：
+  - 在「健康趨勢」標題旁新增 `.range-filter-group` 按鈕組，符合 `taste-skill` 物理按壓與高對比色階。
+  - 實作 `setTimeRange(range)` 與 `filterByDateRange(records, range)` 動態計算邏輯。
+  - 當過濾後無符合數據時，顯示精緻的「尚無符合該區間與時段之紀錄」空狀態提醒。
+
+### 🔍 Check
+- [x] 切換「最近1個月 / 近3個月 / 近半年 / 近1年」是否精確剔除超出範圍之舊數據？ (是)
+- [x] 區間篩選與「早 / 中 / 晚」時段按鈕能否組合使用？ (是，精準聯集/交集計算)
+- [x] Chart.js 圖表在不同時間區間下是否順暢自動擴展與縮放？ (是)
+
+### ⚡ Act
+- 提供使用者更靈活的長期血壓變化追蹤能力。
+
+## [2026-08-01] UI/UX 視覺重構：導入 taste-skill (Anti-Slop Frontend Framework)
+
+### 🎯 Plan
+- 依據 `taste-skill` (`leonxlnx/taste-skill`) 全套 Anti-Slop 介面規範升級血壓系統視覺體驗。
+- 設定設計三標盤 (Three Dials)：`DESIGN_VARIANCE: 6`, `MOTION_INTENSITY: 5`, `VISUAL_DENSITY: 4`。
+- 解決醫療數據跳動與視圖壓縮問題，強化微互動與物理按壓回彈體驗 (Tactile Physics & Tabular Numerals)。
+
+### 🚀 Do
+- **數字無跳動排版 (`tabular-nums`)**：
+  - 於 `.big-val`, `#currentAvg`, `#editCurrentAvg`, `.history-row` 與輸入框全面啟用 `font-variant-numeric: tabular-nums` 與 `font-feature-settings: "tnum" 1`，徹底防止數據跳動導致版面抖動。
+- **物理按壓微互動 (Tactile Physics)**：
+  - 為 `.btn`, `.period-btn`, `.btn-edit`, `.btn-delete` 加入 `:active` 按壓物理縮放回彈 (`transform: scale(0.97)`)。
+- **玻璃擬態高階邊線與陰影 (High-End Glass Depth)**：
+  - 導入 `shadow-glass` inset 頂線亮光 (`inset 0 1px 0 0 rgba(255, 255, 255, 0.75)`) 與微層次擴散陰影。
+- **輸入框與觸控優化**：
+  - 強化 `:focus` 藍光環繞圈與 0.15s 彈性動畫，確保手機觸控響應流暢度。
+
+### 🔍 Check
+- [x] 數值變化時版面是否維持 0 抖動？ (是)
+- [x] 所有按鈕與互動元件是否有明確物理按壓反饋？ (是)
+- [x] 極致灰階與色彩大師色階比對是否符 Standard WCAG AA 標準？ (是)
+
+### ⚡ Act
+- 維持 taste-skill 規範作為未來的視覺維護標準。
+
+## [2026-08-01] 功能增強：歷史血壓紀錄『編輯與修訂』功能實作 (Edit & Revision Feature)
+
+### 🎯 Plan
+- 解決使用者反應「歷史錯誤紀錄無法修訂」的問題。
+- 設計與實作雙模 (SQLite / localStorage) 歷史紀錄編輯對話框 (Edit Modal)。
+- 補齊後端 API `PUT /api/records/:id` 修改接口。
+- 編輯數值時即時試算 722 捨棄最高壓平均值，並同步刷新歷史清單、健康分析與 Chart.js 圖表。
+
+### 🚀 Do
+- **後端 API 擴充 (`server.js`)**：
+  - 新增 `PUT /api/records/:id` 端點，支援更新 SQLite 中特定紀錄的數值、時段、日期與計算結果。
+- **前端介面與互動 (`index.html` & `index.css`)**：
+  - 於歷史清單列表中新增 `.btn-edit` 修訂按鈕。
+  - 建立玻璃擬態 `#editModal` 對話框，包含日期時間選擇器、時段下拉選單、3 次收縮壓/舒張壓輸入框與即時試算結果面板。
+  - 實作 `openEditModal()`, `closeEditModal()`, `updateEditUI()`, `saveEditRecord()`。
+  - 支援 Server 模式優先走 API，失敗或 GitHub Pages 靜態模式無縫降級切換至 `localStorage` 陣列替換更新。
+
+### 🔍 Check
+- [x] 修訂歷史紀錄後平均值是否按 722 規則重新計算？ (是，三取二捨棄最高壓)
+- [x] Server 模式 (SQLite) 與 Serverless 模式 (localStorage) 是否皆能成功修訂？ (是)
+- [x] 修訂完成後 UI 清單、健康提示與 Chart.js 趨勢圖是否即時刷新？ (是)
+
+### ⚡ Act
+- 確保歷史紀錄增刪改查 (CRUD) 達到 100% 完整性。
+
 ## [2026-06-01] 系統轉型：SkillsBuilder 整合
 
 ### 🎯 Plan

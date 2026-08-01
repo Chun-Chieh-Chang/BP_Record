@@ -121,11 +121,22 @@
         <div class="glass-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                 <h2><i class="fa-solid fa-chart-line"></i> 健康趨勢</h2>
-                <div class="filter-group" style="display: flex; gap: 4px;">
-                    <button class="btn btn-outline active-filter" data-filter="All" onclick="setFilter('All')">全部</button>
-                    <button class="btn btn-outline" data-filter="Morning" onclick="setFilter('Morning')">早</button>
-                    <button class="btn btn-outline" data-filter="Noon" onclick="setFilter('Noon')">中</button>
-                    <button class="btn btn-outline" data-filter="Night" onclick="setFilter('Night')">晚</button>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                    <!-- 日期區間過濾 -->
+                    <div class="range-filter-group">
+                        <button class="btn active-filter" data-range="All" onclick="setTimeRange('All')">全部時間</button>
+                        <button class="btn" data-range="1M" onclick="setTimeRange('1M')">近1個月</button>
+                        <button class="btn" data-range="3M" onclick="setTimeRange('3M')">近3個月</button>
+                        <button class="btn" data-range="6M" onclick="setTimeRange('6M')">近半年</button>
+                        <button class="btn" data-range="1Y" onclick="setTimeRange('1Y')">近1年</button>
+                    </div>
+                    <!-- 時段過濾 -->
+                    <div class="filter-group">
+                        <button class="btn active-filter" data-filter="All" onclick="setFilter('All')">全時段</button>
+                        <button class="btn" data-filter="Morning" onclick="setFilter('Morning')">早</button>
+                        <button class="btn" data-filter="Noon" onclick="setFilter('Noon')">中</button>
+                        <button class="btn" data-filter="Night" onclick="setFilter('Night')">晚</button>
+                    </div>
                 </div>
             </div>
             <!-- 血壓標準對照說明 (Legend) -->
@@ -199,7 +210,8 @@
     let history = [];
     let chart = null;
     let currentPeriod = 'Morning';
-    let currentFilter = 'All'; // 新增過濾狀態
+    let currentFilter = 'All'; // 時段過濾狀態
+    let currentTimeRange = 'All'; // 日期區間過濾狀態 ('All', '1M', '3M', '6M', '1Y')
     const periodNames = { Morning: '早上', Noon: '中午', Night: '晚上' };
 
     function setPeriod(p) {
@@ -212,7 +224,37 @@
         document.querySelectorAll('.filter-group .btn').forEach(btn => {
             btn.classList.toggle('active-filter', btn.dataset.filter === f);
         });
-        renderAll(); // 重新渲染列表與圖表
+        renderAll();
+    }
+
+    function setTimeRange(r) {
+        currentTimeRange = r;
+        document.querySelectorAll('.range-filter-group .btn').forEach(btn => {
+            btn.classList.toggle('active-filter', btn.dataset.range === r);
+        });
+        renderAll();
+    }
+
+    function filterByDateRange(records, range) {
+        if (range === 'All' || !records || records.length === 0) return records;
+        const now = new Date();
+        const cutoff = new Date(now);
+
+        if (range === '1M') {
+            cutoff.setMonth(now.getMonth() - 1);
+        } else if (range === '3M') {
+            cutoff.setMonth(now.getMonth() - 3);
+        } else if (range === '6M') {
+            cutoff.setMonth(now.getMonth() - 6);
+        } else if (range === '1Y') {
+            cutoff.setFullYear(now.getFullYear() - 1);
+        }
+
+        return records.filter(r => {
+            if (!r.time) return false;
+            const recordDate = new Date(r.time);
+            return recordDate >= cutoff;
+        });
     }
 
     // 取得今天 722 量測預設時間
@@ -377,26 +419,35 @@
     }
 
     function renderAll() {
-        // 套用過濾
-        const filteredData = currentFilter === 'All' ? history : history.filter(r => r.period === currentFilter);
+        // 1. 套用時段過濾
+        let filteredData = currentFilter === 'All' ? history : history.filter(r => r.period === currentFilter);
+        // 2. 套用日期區間過濾 (全時間, 近1個月, 近3個月, 近半年, 近1年)
+        filteredData = filterByDateRange(filteredData, currentTimeRange);
         
         const list = document.getElementById('historyList');
-        list.innerHTML = filteredData.slice(0, 15).map(r => `
-            <div class="history-row">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <button class="btn-delete" onclick="deleteRecord(${r.id || 'null'}, '${r.time}', '${r.period}')" title="刪除">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                    <div>
-                        <span style="font-weight:700; color:var(--color-accent-blue)">[${periodNames[r.period]}]</span>
-                        <span style="font-size:0.8rem; margin-left:5px;">${r.time.slice(5, 10).replace('T', ' ')}</span>
+        if (filteredData.length === 0) {
+            list.innerHTML = `<div style="text-align:center; padding: 24px 0; color: var(--color-text-secondary); font-size: 0.78rem;">尚無符合該區間與時段之紀錄</div>`;
+        } else {
+            list.innerHTML = filteredData.slice(0, 15).map(r => `
+                <div class="history-row">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <button class="btn-edit" onclick="openEditModal(${r.id || 'null'}, '${r.time}', '${r.period}')" title="修訂">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deleteRecord(${r.id || 'null'}, '${r.time}', '${r.period}')" title="刪除">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        <div style="margin-left: 4px;">
+                            <span style="font-weight:700; color:var(--color-accent-blue)">[${periodNames[r.period]}]</span>
+                            <span style="font-size:0.8rem; margin-left:5px;">${r.time.slice(5, 10).replace('T', ' ')}</span>
+                        </div>
+                    </div>
+                    <div style="font-weight: 800; color: ${ (r.avg_sys >= 135 || r.avg_dia >= 85) ? 'var(--color-warning)' : 'var(--color-success)' }">
+                        ${r.avg_sys} / ${r.avg_dia}
                     </div>
                 </div>
-                <div style="font-weight: 800; color: ${ (r.avg_sys >= 135 || r.avg_dia >= 85) ? 'var(--color-warning)' : 'var(--color-success)' }">
-                    ${r.avg_sys} / ${r.avg_dia}
-                </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
         updateChart(filteredData);
     }
 
@@ -410,9 +461,11 @@
             }
         }
         const ctx = document.getElementById('bpChart').getContext('2d');
-        // 按時間正序排列圖表數據
-        const sorted = [...dataToShow].sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-21);
-        
+        // 按時間正序排列圖表數據，若為全部時間則取最近 30 筆，特定區間過濾則顯示全部該區間數據
+        const sorted = currentTimeRange === 'All' 
+            ? [...dataToShow].sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-30)
+            : [...dataToShow].sort((a, b) => new Date(a.time) - new Date(b.time));
+
         // 依據點的密度與螢幕寬度自適應調整點的大小與框線，避免密集時重疊擁擠
         const pointCount = sorted.length;
         const isMobile = window.innerWidth < 768;
@@ -636,7 +689,193 @@
         }
     }
 
+    let currentEditingRecord = null;
+
+    function openEditModal(id, time, period) {
+        const user = document.getElementById('username').value;
+        let target = null;
+        if (id && id !== 'null') {
+            target = history.find(r => r.id == id);
+        }
+        if (!target) {
+            target = history.find(r => r.time === time && r.period === period);
+        }
+        if (!target) return alert('找不到該筆修訂紀錄');
+
+        currentEditingRecord = { ...target };
+
+        document.getElementById('editRecordTime').value = target.time.slice(0, 16);
+        document.getElementById('editPeriod').value = target.period;
+
+        const raw = target.raw || [
+            { sys: target.sys1, dia: target.dia1 },
+            { sys: target.sys2, dia: target.dia2 },
+            { sys: target.sys3, dia: target.dia3 }
+        ];
+
+        document.getElementById('editSys1').value = (raw[0] && raw[0].sys !== null && raw[0].sys !== undefined && !isNaN(raw[0].sys)) ? raw[0].sys : '';
+        document.getElementById('editDia1').value = (raw[0] && raw[0].dia !== null && raw[0].dia !== undefined && !isNaN(raw[0].dia)) ? raw[0].dia : '';
+        document.getElementById('editSys2').value = (raw[1] && raw[1].sys !== null && raw[1].sys !== undefined && !isNaN(raw[1].sys)) ? raw[1].sys : '';
+        document.getElementById('editDia2').value = (raw[1] && raw[1].dia !== null && raw[1].dia !== undefined && !isNaN(raw[1].dia)) ? raw[1].dia : '';
+        document.getElementById('editSys3').value = (raw[2] && raw[2].sys !== null && raw[2].sys !== undefined && !isNaN(raw[2].sys)) ? raw[2].sys : '';
+        document.getElementById('editDia3').value = (raw[2] && raw[2].dia !== null && raw[2].dia !== undefined && !isNaN(raw[2].dia)) ? raw[2].dia : '';
+
+        updateEditUI();
+        document.getElementById('editModal').classList.add('active');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.remove('active');
+        currentEditingRecord = null;
+    }
+
+    function updateEditUI() {
+        const vals = [
+            { sys: parseInt(document.getElementById('editSys1').value), dia: parseInt(document.getElementById('editDia1').value) },
+            { sys: parseInt(document.getElementById('editSys2').value), dia: parseInt(document.getElementById('editDia2').value) },
+            { sys: parseInt(document.getElementById('editSys3').value), dia: parseInt(document.getElementById('editDia3').value) }
+        ];
+        const res = calculateLogic(vals);
+        const display = document.getElementById('editCurrentAvg');
+        const discard = document.getElementById('editDiscardInfo');
+        const box = document.getElementById('editResultBox');
+
+        if (res) {
+            display.innerText = `${res.avgSys} / ${res.avgDia} mmHg`;
+            if (res.count === 3) {
+                discard.innerText = `已執行三取二，排除第 ${res.discardedIdx + 1} 次最高壓`;
+            } else {
+                discard.innerText = `目前輸入 ${res.count} 筆數據 (建議量滿 3 次以利自動去偏)`;
+            }
+            const isHigh = res.avgSys >= 135 || res.avgDia >= 85;
+            box.style.background = isHigh ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+            display.style.color = isHigh ? 'var(--color-warning)' : 'var(--color-success)';
+        } else {
+            display.innerText = '-- / -- mmHg';
+            discard.innerText = '';
+            box.style.background = 'rgba(16, 185, 129, 0.05)';
+        }
+    }
+
+    async function saveEditRecord() {
+        if (!currentEditingRecord) return;
+        const user = document.getElementById('username').value;
+        if (!user) return alert('請先識別使用者');
+
+        const vals = [
+            { sys: parseInt(document.getElementById('editSys1').value), dia: parseInt(document.getElementById('editDia1').value) },
+            { sys: parseInt(document.getElementById('editSys2').value), dia: parseInt(document.getElementById('editDia2').value) },
+            { sys: parseInt(document.getElementById('editSys3').value), dia: parseInt(document.getElementById('editDia3').value) }
+        ];
+        const res = calculateLogic(vals);
+        if (!res) return alert('請至少輸入一筆有效的量測數值');
+
+        const newTime = document.getElementById('editRecordTime').value;
+        const newPeriod = document.getElementById('editPeriod').value;
+
+        const updatedRecord = {
+            id: currentEditingRecord.id,
+            username: user,
+            time: newTime,
+            period: newPeriod,
+            raw: vals.filter(v => !isNaN(v.sys) && !isNaN(v.dia)),
+            average: { sys: res.avgSys, dia: res.avgDia },
+            avg_sys: res.avgSys,
+            avg_dia: res.avgDia,
+            discardedIdx: res.discardedIdx
+        };
+
+        try {
+            if (currentEditingRecord.id) {
+                await apiRequest(`${API_BASE}/records/${currentEditingRecord.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedRecord)
+                });
+            } else {
+                throw new Error('No backend ID, falling back to local edit');
+            }
+            await loadRecords();
+            closeEditModal();
+        } catch (err) {
+            console.warn('Backend edit failed, using local storage fallback:', err.message);
+            const localData = localStorage.getItem(`BP_${user}`);
+            if (localData) {
+                let localHistory = JSON.parse(localData);
+                const idx = localHistory.findIndex(r => r.time === currentEditingRecord.time && r.period === currentEditingRecord.period);
+                if (idx !== -1) {
+                    localHistory[idx] = updatedRecord;
+                } else {
+                    localHistory.push(updatedRecord);
+                }
+                localHistory.sort((a, b) => new Date(b.time) - new Date(a.time));
+                localStorage.setItem(`BP_${user}`, JSON.stringify(localHistory));
+                history = localHistory;
+                renderAll();
+                analyzeHealth();
+            }
+            closeEditModal();
+        }
+    }
+
     initTime();
 </script>
+
+<!-- 修訂歷史紀錄彈窗 -->
+<div id="editModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-pen-to-square"></i> 修訂歷史量測紀錄</h3>
+            <button class="modal-close" onclick="closeEditModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:0.75rem; font-weight:600; color:var(--color-text-secondary);">量測日期與時間</label>
+                    <input type="datetime-local" id="editRecordTime" style="margin-top:4px;">
+                </div>
+                <div style="width:110px;">
+                    <label style="font-size:0.75rem; font-weight:600; color:var(--color-text-secondary);">量測時段</label>
+                    <select id="editPeriod" style="margin-top:4px; width:100%; height:38px; border-radius:var(--radius-sm); border:1px solid var(--color-border); padding:0 8px; font-size:0.85rem; background:var(--color-surface-solid); color:var(--color-text-primary);">
+                        <option value="Morning">早上</option>
+                        <option value="Noon">中午</option>
+                        <option value="Night">晚上</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed var(--color-border); padding-top: 10px;">
+                <label style="font-size:0.8rem; font-weight:700; color:var(--color-accent-blue); display:block; margin-bottom:8px;">
+                    <i class="fa-solid fa-list-ol"></i> 三次量測數值 (收縮壓 / 舒張壓)
+                </label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px;">
+                    <input type="number" id="editSys1" placeholder="第一次 收縮壓" oninput="updateEditUI()">
+                    <input type="number" id="editDia1" placeholder="第一次 舒張壓" oninput="updateEditUI()">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px;">
+                    <input type="number" id="editSys2" placeholder="第二次 收縮壓" oninput="updateEditUI()">
+                    <input type="number" id="editDia2" placeholder="第二次 舒張壓" oninput="updateEditUI()">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <input type="number" id="editSys3" placeholder="第三次 收縮壓" oninput="updateEditUI()">
+                    <input type="number" id="editDia3" placeholder="第三次 舒張壓" oninput="updateEditUI()">
+                </div>
+            </div>
+
+            <!-- 即時運算與試算結果 -->
+            <div id="editResultBox" style="background: rgba(16, 185, 129, 0.05); border-radius: var(--radius-sm); padding: 10px; text-align: center; border: 1px solid var(--color-border);">
+                <div style="font-size:0.75rem; color:var(--color-text-secondary);">試算修正平均血壓</div>
+                <div id="editCurrentAvg" class="big-val" style="color:var(--color-success); margin: 2px 0;">-- / -- mmHg</div>
+                <div id="editDiscardInfo" style="font-size:0.72rem; color:var(--color-text-secondary);"></div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+                <button class="btn" style="background:var(--color-border); color:var(--color-text-primary);" onclick="closeEditModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveEditRecord()"><i class="fa-solid fa-floppy-disk"></i> 儲存修訂</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
+
