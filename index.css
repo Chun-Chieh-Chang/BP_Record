@@ -178,7 +178,7 @@ header {
     }
     .main-layout {
         display: grid;
-        grid-template-columns: 300px 1fr 340px;
+        grid-template-columns: 360px 1fr 340px;
         height: calc(100vh - 85px);
         min-height: 0;
     }
@@ -470,6 +470,13 @@ input:focus {
     font-size: 0.78rem;
     line-height: 1.5;
     color: var(--color-text-secondary);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.guide-content ul,
+.guide-content ol {
+    padding-left: 18px;
 }
 
 .guide-content h3 {

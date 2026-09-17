@@ -172,6 +172,24 @@ app.post('/api/import/:username', async (req, res) => {
     }
 });
 
+// API: 更改使用者名稱
+app.put('/api/users/:username/rename', (req, res) => {
+    const oldUsername = req.params.username;
+    const { newUsername } = req.body;
+    if (!newUsername || newUsername.trim() === '') {
+        return res.status(400).json({ error: '新使用者名稱不能為空' });
+    }
+    const trimmed = newUsername.trim();
+    db.run(
+        `UPDATE records SET username = ? WHERE username = ?`,
+        [trimmed, oldUsername],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: '使用者名稱更新成功', count: this.changes });
+        }
+    );
+});
+
 // API: 刪除紀錄
 app.delete('/api/records/:id', (req, res) => {
     const id = req.params.id;

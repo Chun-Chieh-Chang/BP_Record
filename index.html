@@ -48,7 +48,12 @@
             <h1 style="margin:0; font-size: 1.3rem; font-family: 'Outfit', sans-serif; font-weight: 700; color:var(--color-accent-blue); display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-heart-pulse"></i> BP <span style="color:var(--color-text-primary); font-weight: 300;">Nexus</span>
             </h1>
-            <div id="userDisplay" style="font-size: 0.85rem; font-weight: 800; color: var(--color-text-primary); background: rgba(58, 124, 168, 0.08); padding: 4px 10px; border-radius: 20px;"></div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <div id="userDisplay" style="font-size: 0.85rem; font-weight: 800; color: var(--color-text-primary); background: rgba(58, 124, 168, 0.08); padding: 4px 10px; border-radius: 20px;"></div>
+                <button id="renameBtn" onclick="openRenameModal()" title="更改使用者名稱" style="display:none; background: none; border: none; cursor: pointer; color: var(--color-accent-blue); font-size: 0.85rem; padding: 2px 4px; opacity: 0.7; transition: var(--transition-fast);" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+                    <i class="fa-solid fa-user-pen"></i>
+                </button>
+            </div>
         </div>
         <div class="header-center">
             <div id="advisorText">
@@ -58,6 +63,7 @@
         <div class="header-right">
             <button class="btn btn-outline" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Excel 匯出</button>
             <button class="btn btn-outline" onclick="exportJSON()"><i class="fa-solid fa-file-code"></i> JSON 備份</button>
+            <button class="btn btn-outline" onclick="openSaveAsModal()" title="另存新檔"><i class="fa-solid fa-floppy-disk"></i> 另存新檔</button>
         </div>
     </header>
 
@@ -210,8 +216,9 @@
     let history = [];
     let chart = null;
     let currentPeriod = 'Morning';
-    let currentFilter = 'All'; // 時段過濾狀態
-    let currentTimeRange = 'All'; // 日期區間過濾狀態 ('All', '1M', '3M', '6M', '1Y')
+    let currentFilter = 'All';
+    let currentTimeRange = 'All';
+    let currentUser = ''; // 已成功載入的使用者（與輸入框草稿分離）
     const periodNames = { Morning: '早上', Noon: '中午', Night: '晚上' };
 
     function setPeriod(p) {
@@ -265,9 +272,11 @@
     }
 
     async function loadRecords() {
-        const user = document.getElementById('username').value;
+        const user = document.getElementById('username').value.trim();
         if (!user) return;
+        currentUser = user;
         document.getElementById('userDisplay').innerText = `👤 使用者: ${user}`;
+        document.getElementById('renameBtn').style.display = 'inline-flex';
         try {
             const res = await apiRequest(`${API_BASE}/records/${user}`);
             history = await res.json();
@@ -339,8 +348,8 @@
     }
 
     async function saveRecord() {
-        const user = document.getElementById('username').value;
-        if (!user) return alert('請先輸入姓名');
+        const user = currentUser;
+        if (!user) return alert('請先載入使用者（輸入姓名後按「載入」）');
         const vals = [
             { sys: parseInt(document.getElementById('sys1').value), dia: parseInt(document.getElementById('dia1').value) },
             { sys: parseInt(document.getElementById('sys2').value), dia: parseInt(document.getElementById('dia2').value) },
@@ -396,7 +405,7 @@
 
     async function deleteRecord(id, time, period) {
         if (!confirm('確定要刪除這筆紀錄嗎？')) return;
-        const user = document.getElementById('username').value;
+        const user = currentUser;
         try {
             if (id) {
                 await apiRequest(`${API_BASE}/records/${id}`, { method: 'DELETE' });
@@ -573,8 +582,8 @@
     }
 
     function exportExcel() {
-        const user = document.getElementById('username').value;
-        if (!user) return alert('請先識別使用者');
+        const user = currentUser;
+        if (!user) return alert('請先載入使用者');
         
         if (isGitHubPages || !window.location.port) {
             // Client-side Excel export using SheetJS
@@ -608,8 +617,8 @@
     }
 
     function exportJSON() {
-        const user = document.getElementById('username').value;
-        if (!user) return alert('請先識別使用者');
+        const user = currentUser;
+        if (!user) return alert('請先載入使用者');
         const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -619,8 +628,8 @@
     }
 
     function importJSON(event) {
-        const user = document.getElementById('username').value;
-        if (!user) return alert('請先識別使用者');
+        const user = currentUser;
+        if (!user) return alert('請先載入使用者');
         const file = event.target.files[0];
         if (!file) return;
 
@@ -674,8 +683,8 @@
     }
 
     function clearAll() {
-        const user = document.getElementById('username').value;
-        if (!user) return alert('請先識別使用者');
+        const user = currentUser;
+        if (!user) return alert('請先載入使用者');
         if (confirm('確定清空該名使用者所有數據嗎？此操作無法復原。')) {
             if (isGitHubPages || !window.location.port) {
                 localStorage.removeItem(`BP_${user}`);
@@ -759,8 +768,8 @@
 
     async function saveEditRecord() {
         if (!currentEditingRecord) return;
-        const user = document.getElementById('username').value;
-        if (!user) return alert('請先識別使用者');
+        const user = currentUser;
+        if (!user) return alert('請先載入使用者');
 
         const vals = [
             { sys: parseInt(document.getElementById('editSys1').value), dia: parseInt(document.getElementById('editDia1').value) },
@@ -818,8 +827,162 @@
         }
     }
 
+    // ── 另存新檔 ──────────────────────────────────────────────────
+    function openSaveAsModal() {
+        const user = currentUser;
+        if (!user) return alert('請先載入使用者');
+        if (history.length === 0) return alert('尚無任何歷史紀錄可供另存');
+        const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        document.getElementById('saveAsFilename').value = `BP_${user}_${today}`;
+        document.getElementById('saveAsModal').classList.add('active');
+    }
+
+    function closeSaveAsModal() {
+        document.getElementById('saveAsModal').classList.remove('active');
+    }
+
+    function performSaveAs() {
+        const filename = document.getElementById('saveAsFilename').value.trim();
+        if (!filename) return alert('請輸入檔案名稱');
+        const format = document.querySelector('input[name="saveAsFormat"]:checked').value;
+
+        if (format === 'json') {
+            const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${filename}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } else {
+            const user = document.getElementById('username').value;
+            const excelData = history.map((r, i) => {
+                const raw = r.raw || [{}, {}, {}];
+                return {
+                    '項次': history.length - i,
+                    '量測時間': r.time.replace('T', ' '),
+                    '時段': r.period === 'Morning' ? '早上' : r.period === 'Noon' ? '中午' : '晚上',
+                    '第一次收縮壓': raw[0]?.sys || '',
+                    '第一次舒張壓': raw[0]?.dia || '',
+                    '第二次收縮壓': raw[1]?.sys || '',
+                    '第二次舒張壓': raw[1]?.dia || '',
+                    '第三次收縮壓': raw[2]?.sys || '',
+                    '第三次舒張壓': raw[2]?.dia || '',
+                    '排除量測序號': ((r.discardedIdx !== undefined ? r.discardedIdx : r.discarded_idx) || 0) + 1,
+                    '平均收縮壓': r.avg_sys || r.average?.sys || '',
+                    '平均舒張壓': r.avg_dia || r.average?.dia || ''
+                };
+            });
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "血壓紀錄表");
+            XLSX.writeFile(workbook, `${filename}.xlsx`);
+        }
+        closeSaveAsModal();
+    }
+
+    // ── 更改使用者名稱 ────────────────────────────────────────────
+    function openRenameModal() {
+        const user = document.getElementById('username').value;
+        if (!user) return;
+        document.getElementById('renameNewName').value = user;
+        document.getElementById('renameModal').classList.add('active');
+        document.getElementById('renameNewName').focus();
+        document.getElementById('renameNewName').select();
+    }
+
+    function closeRenameModal() {
+        document.getElementById('renameModal').classList.remove('active');
+    }
+
+    async function performRename() {
+        const oldName = currentUser;
+        const newName = document.getElementById('renameNewName').value.trim();
+        if (!newName) return alert('新名稱不能為空');
+        if (newName === oldName) { closeRenameModal(); return; }
+
+        try {
+            await apiRequest(`${API_BASE}/users/${encodeURIComponent(oldName)}/rename`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newUsername: newName })
+            });
+        } catch (err) {
+            // localStorage fallback: migrate all records to new key
+            const oldData = localStorage.getItem(`BP_${oldName}`);
+            if (oldData) {
+                const migrated = JSON.parse(oldData).map(r => ({ ...r, username: newName }));
+                localStorage.setItem(`BP_${newName}`, JSON.stringify(migrated));
+                localStorage.removeItem(`BP_${oldName}`);
+            }
+        }
+
+        currentUser = newName;
+        document.getElementById('username').value = newName;
+        document.getElementById('userDisplay').innerText = `👤 使用者: ${newName}`;
+        closeRenameModal();
+        await loadRecords();
+        alert(`使用者名稱已更新為「${newName}」`);
+    }
+
     initTime();
 </script>
+
+<!-- 另存新檔彈窗 -->
+<div id="saveAsModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-floppy-disk"></i> 另存新檔</h3>
+            <button class="modal-close" onclick="closeSaveAsModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+            <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--color-text-secondary); display:block; margin-bottom:6px;">檔案名稱</label>
+                <input type="text" id="saveAsFilename" style="width:100%;" placeholder="請輸入檔案名稱">
+            </div>
+            <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--color-text-secondary); display:block; margin-bottom:8px;">儲存格式</label>
+                <div style="display:flex; gap:16px;">
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.88rem;">
+                        <input type="radio" name="saveAsFormat" value="excel" checked> <i class="fa-solid fa-file-excel" style="color:#217346;"></i> Excel (.xlsx)
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.88rem;">
+                        <input type="radio" name="saveAsFormat" value="json"> <i class="fa-solid fa-file-code" style="color:var(--color-accent-blue);"></i> JSON (.json)
+                    </label>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
+                <button class="btn" style="background:var(--color-border); color:var(--color-text-primary);" onclick="closeSaveAsModal()">取消</button>
+                <button class="btn btn-primary" onclick="performSaveAs()"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 更改使用者名稱彈窗 -->
+<div id="renameModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 380px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-user-pen"></i> 更改使用者名稱</h3>
+            <button class="modal-close" onclick="closeRenameModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+            <div>
+                <label style="font-size:0.75rem; font-weight:600; color:var(--color-text-secondary); display:block; margin-bottom:6px;">新的使用者名稱</label>
+                <input type="text" id="renameNewName" style="width:100%;" placeholder="請輸入新名稱"
+                    onkeydown="if(event.key==='Enter') performRename()">
+            </div>
+            <p style="font-size:0.76rem; color:var(--color-text-secondary); background:rgba(58,124,168,0.06); border-radius:var(--radius-sm); padding:8px 10px; margin:0;">
+                <i class="fa-solid fa-circle-info" style="color:var(--color-accent-blue);"></i>
+                名稱更新後，所有歷史紀錄將同步改名，請確認後再儲存。
+            </p>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
+                <button class="btn" style="background:var(--color-border); color:var(--color-text-primary);" onclick="closeRenameModal()">取消</button>
+                <button class="btn btn-primary" onclick="performRename()"><i class="fa-solid fa-check"></i> 確認更改</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- 修訂歷史紀錄彈窗 -->
 <div id="editModal" class="modal-overlay">
