@@ -1,7 +1,21 @@
+# 相依套件（npm install 重建，絕不入库）
 node_modules/
+
+# 本地資料庫與日誌（含個人健康資料，絕不入库）
 *.db
 *.db-journal
 *.log
+
+# 個人資料備份檔（BP_姓名_日期.json 含真實量測紀錄）
+BP_*.json
+
+# 本地開發工具目錄（Claude Code / Agnes 工作區）
+.claude/
+.agnes/
+
+# 系統垃圾檔
 .DS_Store
 Thumbs.db
+
+# 歷史遺留的臨時截圖
 2026-06-01_152750.png

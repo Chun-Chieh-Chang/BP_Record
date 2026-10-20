@@ -1,5 +1,25 @@
 # Development Log (PDCA)
 
+## [2026-10-20] 還原基準點：全面盤點清理 + 匯入修復 + CI 合併 (Cleanup & Hardening)
+
+### 🎯 Plan
+- 以 MECE / SSOT 原則盤點全專案：移除 git 誤追蹤的 `node_modules/`（1,967 檔，~10MB pack），強化 `.gitignore` 保護個人資料與本地工具目錄，同步開發文件，建立乾淨還原基準點。
+
+### 🚀 Do
+- **Git 清理**：`git rm -r --cached node_modules`（保留磁碟、移除追蹤），`.gitignore` 補上 `BP_*.json`、`.claude/`、`.agnes/` 等個人健康資料與本地工具目錄。
+- **前端修復**：重構 `importJSON` 自動推導目標使用者（JSON 內 `username` → 檔名 `BP_媽媽_YYYYMMDD.json` → `currentUser`），修正「必須先輸入姓名才能匯入、或資料寫入錯誤帳號」導致的數據/圖表不顯示。
+- **CI/CD 合併**：將 `main.yml` 的 Node 建置驗證併入 `deploy.yml` 並移除 `main.yml`，每次 push 僅觸發單一 workflow。
+- **沙盒驗證**：啟動 `server.js` 實測 `GET /records`、`POST /import`、`GET /export`，確認無功能 regression 後原子化提交。
+
+### 🔍 Check
+- [x] `node_modules/` 不再被 git 追蹤（`git ls-files` 剩餘 0 檔）？（是）
+- [x] `BP_*.json`、`.claude/`、`.agnes/`、`*.db` 皆被 `check-ignore` 正確排除？（是）
+- [x] 27 支內嵌 JS 函式、37 支 CSS class 全數被使用（無死碼）？（是）
+- [x] 匯入 JSON 後（即使輸入框為空）自動切換到正確使用者並顯示數據與圖表？（是）
+
+### ⚡ Act
+- 確立「相依套件一律不入库、個人健康資料一律不入库」的資安邊界；以單一 workflow 維持 CI 簡潔。
+
 ## [2026-08-01] 功能增強：新增紀錄時間區間動態篩選 (Time Range Filter Feature)
 
 ### 🎯 Plan
