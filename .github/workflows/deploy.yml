@@ -25,6 +25,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Node.js 建置 / 依賴驗證（原 main.yml 的 CI 步驟併入此處，避免重複 workflow）
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Build (if any)
+        run: npm run build --if-present
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
